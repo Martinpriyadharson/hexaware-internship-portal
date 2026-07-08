@@ -1,0 +1,75 @@
+import React from 'react';
+
+const HexawareLogo = ({ style, ...props }) => {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 200 50" 
+      style={{ display: 'inline-block', verticalAlign: 'middle', ...style }} 
+      {...props}
+    >
+      {/* "hi." Symbol */}
+      <g transform="translate(2, 2)">
+        {/* Slanted stem of 'h' */}
+        <line 
+          x1="22" 
+          y1="6" 
+          x2="15" 
+          y2="38" 
+          stroke="#006CC0" 
+          strokeWidth="7.5" 
+          strokeLinecap="round" 
+        />
+        {/* Horizontal crossbar of 'h' */}
+        <line 
+          x1="5" 
+          y1="22" 
+          x2="29" 
+          y2="22" 
+          stroke="#EF3830" 
+          strokeWidth="7.5" 
+          strokeLinecap="round" 
+        />
+        {/* Slanted stem of 'i' */}
+        <line 
+          x1="36" 
+          y1="16" 
+          x2="30" 
+          y2="38" 
+          stroke="#006CC0" 
+          strokeWidth="7.5" 
+          strokeLinecap="round" 
+        />
+        {/* Red dot of 'i' */}
+        <circle 
+          cx="38" 
+          cy="6" 
+          r="4.5" 
+          fill="#EF3830" 
+        />
+        {/* Yellow dot at bottom-right */}
+        <circle 
+          cx="44" 
+          cy="34" 
+          r="4.5" 
+          fill="#F9B016" 
+        />
+      </g>
+      
+      {/* "HEXAWARE" Text */}
+      <text 
+        x="64" 
+        y="34" 
+        fontFamily="'Outfit', 'Inter', sans-serif" 
+        fontSize="21" 
+        fontWeight="800" 
+        fill="#FFFFFF" 
+        letterSpacing="0.5"
+      >
+        HEXAWARE
+      </text>
+    </svg>
+  );
+};
+
+export default HexawareLogo;
