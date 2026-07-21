@@ -6,6 +6,7 @@ import {
   Globe, Landmark, School, Award, Check
 } from 'lucide-react';
 import tneaColleges from '../data/tneaColleges.json';
+import Galaxy from '../components/Galaxy';
 
 const DEGREES = [
   'B.E. (Bachelor of Engineering)',
@@ -33,6 +34,84 @@ const BRANCHES = [
   'Chemical Engineering',
   'Other'
 ];
+
+const INDIAN_STATES = [
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chhattisgarh',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+  'Andaman and Nicobar Islands',
+  'Chandigarh',
+  'Dadra and Nagar Haveli and Daman and Diu',
+  'Delhi',
+  'Jammu and Kashmir',
+  'Ladakh',
+  'Lakshadweep',
+  'Puducherry',
+  'Other'
+];
+
+const CITIES_BY_STATE = {
+  'Tamil Nadu': [
+    'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli (Trichy)', 'Salem', 
+    'Tirunelveli', 'Vellore', 'Erode', 'Thoothukudi (Tuticorin)', 'Nagercoil', 
+    'Thanjavur', 'Kanchipuram', 'Dindigul', 'Karur', 'Tiruppur', 'Cuddalore', 
+    'Neyveli', 'Kumbakonam', 'Tiruvannamalai', 'Pollachi', 'Rajapalayam', 
+    'Gudiyatham', 'Pudukkottai', 'Vaniyambadi', 'Ambur', 'Nagapattinam', 
+    'Karaikudi', 'Tenkasi', 'Mayiladuthurai', 'Dharmapuri', 'Krishnagiri', 
+    'Namakkal', 'Ranipet', 'Sivakasi', 'Theni', 'Tirupathur', 'Tiruvallur', 
+    'Tiruvarur', 'Ooty (Udhagamandalam)', 'Ariyalur', 'Perambalur', 
+    'Kallakurichi', 'Ramanathapuram', 'Virudhunagar', 'Other'
+  ],
+  'Karnataka': ['Bangalore (Bengaluru)', 'Mysore (Mysuru)', 'Mangalore (Mangaluru)', 'Hubli-Dharwad', 'Belgaum', 'Gulbarga', 'Davanagere', 'Bellary', 'Shimoga', 'Tumkur', 'Other'],
+  'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur', 'Nellore', 'Kurnool', 'Tirupati', 'Rajahmundry', 'Kakinada', 'Kadapa', 'Anantapur', 'Other'],
+  'Telangana': ['Hyderabad', 'Warangal', 'Nizamabad', 'Karimnagar', 'Ramagundam', 'Khammam', 'Mahbubnagar', 'Other'],
+  'Kerala': ['Kochi', 'Thiruvananthapuram (Trivandrum)', 'Kozhikode (Calicut)', 'Thrissur', 'Kollam', 'Alappuzha', 'Palakkad', 'Kottayam', 'Kannur', 'Other'],
+  'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik', 'Kalyan-Dombivli', 'Vasai-Virar', 'Aurangabad', 'Navi Mumbai', 'Solapur', 'Kolhapur', 'Other'],
+  'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar', 'Jamnagar', 'Junagadh', 'Gandhinagar', 'Anand', 'Other'],
+  'Rajasthan': ['Jaipur', 'Jodhpur', 'Kota', 'Bikaner', 'Ajmer', 'Udaipur', 'Bhilwara', 'Alwar', 'Other'],
+  'Delhi': ['New Delhi', 'Delhi NCR', 'Dwarka', 'Rohini', 'South Delhi', 'North Delhi', 'East Delhi', 'West Delhi', 'Other'],
+  'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Ghaziabad', 'Agra', 'Meerut', 'Varanasi', 'Prayagraj (Allahabad)', 'Bareilly', 'Aligarh', 'Noida', 'Other'],
+  'West Bengal': ['Kolkata', 'Howrah', 'Darjeeling', 'Siliguri', 'Asansol', 'Durgapur', 'Bardhaman', 'Kharagpur', 'Other'],
+  'Haryana': ['Gurugram', 'Faridabad', 'Panipat', 'Ambala', 'Yamunanagar', 'Rohtak', 'Hisar', 'Karnal', 'Other'],
+  'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar', 'Patiala', 'Bathinda', 'Mohali', 'Pathankot', 'Other'],
+  'Madhya Pradesh': ['Indore', 'Bhopal', 'Jabalpur', 'Gwalior', 'Ujjain', 'Sagar', 'Dewas', 'Other'],
+  'Bihar': ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur', 'Purnia', 'Darbhanga', 'Arrah', 'Other'],
+  'Odisha': ['Bhubaneswar', 'Cuttack', 'Rourkela', 'Berhampur', 'Sambalpur', 'Puri', 'Other'],
+  'Chhattisgarh': ['Raipur', 'Bhilai', 'Bilaspur', 'Korba', 'Other'],
+  'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad', 'Bokaro Steel City', 'Other'],
+  'Assam': ['Guwahati', 'Dibrugarh', 'Silchar', 'Jorhat', 'Other'],
+  'Uttarakhand': ['Dehradun', 'Haridwar', 'Haldwani', 'Roorkee', 'Other'],
+  'Himachal Pradesh': ['Shimla', 'Dharamshala', 'Solan', 'Mandi', 'Other'],
+  'Goa': ['Panaji', 'Margao', 'Vasco da Gama', 'Mapusa', 'Other'],
+  'Jammu and Kashmir': ['Srinagar', 'Jammu', 'Anantnag', 'Baramulla', 'Other'],
+  'Chandigarh': ['Chandigarh', 'Other'],
+  'Puducherry': ['Puducherry', 'Karaikal', 'Mahe', 'Yanam', 'Other']
+};
 
 // Reusable Autocomplete ComboBox component
 const SearchableSelect = ({ label, id, value, onChange, options, placeholder, icon: Icon }) => {
@@ -171,6 +250,9 @@ const ProfileDetails = () => {
   const [customCollege, setCustomCollege] = useState('');
   const [customDegree, setCustomDegree] = useState('');
   const [customBranch, setCustomBranch] = useState('');
+  const [customState, setCustomState] = useState('');
+  const [customCity, setCustomCity] = useState('');
+  const [customCountry, setCustomCountry] = useState('');
 
   // Pre-fill user data when context is loaded
   useEffect(() => {
@@ -178,10 +260,20 @@ const ProfileDetails = () => {
       const dbCollege = user.college || '';
       const dbDegree = user.degree || '';
       const dbBranch = user.branch || '';
+      const dbState = user.state || '';
+      const dbCity = user.city || '';
+      const dbCountry = user.country || 'India';
 
       const isCollegeInList = tneaColleges.includes(dbCollege);
       const isDegreeInList = DEGREES.includes(dbDegree);
       const isBranchInList = BRANCHES.includes(dbBranch);
+      const isStateInList = INDIAN_STATES.includes(dbState);
+      const isCountryInList = ['India'].includes(dbCountry);
+      
+      let isCityInList = false;
+      if (isStateInList && CITIES_BY_STATE[dbState]) {
+        isCityInList = CITIES_BY_STATE[dbState].includes(dbCity);
+      }
 
       setFormData(prev => ({
         ...prev,
@@ -196,9 +288,9 @@ const ProfileDetails = () => {
         currentYear: user.currentYear || '',
         graduationYear: user.graduationYear || '',
         cgpa: user.cgpa || '',
-        city: user.city || '',
-        state: user.state || '',
-        country: user.country || 'India',
+        city: dbCity ? (isCityInList ? dbCity : 'Other') : '',
+        state: dbState ? (isStateInList ? dbState : 'Other') : '',
+        country: dbCountry ? (isCountryInList ? dbCountry : 'Other') : 'India',
         isInfoAccurate: user.isDeclarationConfirmed || false,
         isTermsAccepted: user.isDeclarationConfirmed || false,
       }));
@@ -206,6 +298,9 @@ const ProfileDetails = () => {
       if (dbCollege && !isCollegeInList) setCustomCollege(dbCollege);
       if (dbDegree && !isDegreeInList) setCustomDegree(dbDegree);
       if (dbBranch && !isBranchInList) setCustomBranch(dbBranch);
+      if (dbState && !isStateInList) setCustomState(dbState);
+      if (dbCity && !isCityInList) setCustomCity(dbCity);
+      if (dbCountry && !isCountryInList) setCustomCountry(dbCountry);
     }
   }, [user]);
 
@@ -239,8 +334,111 @@ const ProfileDetails = () => {
     setCompleteness(percent);
   }, [formData, customCollege, customDegree, customBranch]);
 
+  const getCurrentYearOptions = (deg) => {
+    if (!deg) {
+      return ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Other'];
+    }
+    
+    // Master degrees (M.E., M.Tech, M.C.A., M.Sc, etc.)
+    if (deg.startsWith('M.')) {
+      return ['1st Year', '2nd Year', 'Other'];
+    }
+    
+    // 3-year Bachelor degrees (B.Sc, B.C.A)
+    if (deg.startsWith('B.Sc') || deg.startsWith('B.C.A')) {
+      return ['1st Year', '2nd Year', '3rd Year', 'Other'];
+    }
+    
+    // Default/4-year Bachelor degrees (B.E., B.Tech)
+    return ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Other'];
+  };
+
+  const getBranchOptions = (deg) => {
+    if (!deg) {
+      return BRANCHES;
+    }
+    
+    // B.Sc or M.Sc specializations
+    if (deg.includes('B.Sc') || deg.includes('M.Sc')) {
+      return [
+        'Computer Science',
+        'Information Technology',
+        'Mathematics',
+        'Physics',
+        'Chemistry',
+        'Other'
+      ];
+    }
+    
+    // B.C.A or M.C.A specializations
+    if (deg.includes('B.C.A') || deg.includes('M.C.A')) {
+      return [
+        'Computer Applications',
+        'Computer Science',
+        'Other'
+      ];
+    }
+    
+    // Default engineering branches (B.E., B.Tech, M.E., M.Tech)
+    return BRANCHES;
+  };
+
+  // Reset branch and currentYear if they are no longer valid for the selected degree
+  useEffect(() => {
+    const deg = formData.degree === 'Other' ? customDegree : formData.degree;
+    
+    // Sync currentYear
+    const yearOptions = getCurrentYearOptions(deg);
+    if (formData.currentYear && !yearOptions.includes(formData.currentYear)) {
+      setFormData(prev => ({ ...prev, currentYear: '' }));
+    }
+    
+    // Sync branch
+    const branchOptions = getBranchOptions(deg);
+    if (formData.branch && !branchOptions.includes(formData.branch)) {
+      setFormData(prev => ({ ...prev, branch: '' }));
+    }
+  }, [formData.degree, customDegree]);
+
+  // Reset City if State changes
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, city: '' }));
+    setCustomCity('');
+  }, [formData.state]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (name === 'name') {
+      // Allow only letters and spaces
+      const sanitized = value.replace(/[^A-Za-z\s]/g, '');
+      setFormData(prev => ({
+        ...prev,
+        [name]: sanitized
+      }));
+      return;
+    }
+
+    if (name === 'mobile') {
+      // Allow only numbers and limit to 10 digits
+      const sanitized = value.replace(/\D/g, '').substring(0, 10);
+      setFormData(prev => ({
+        ...prev,
+        [name]: sanitized
+      }));
+      return;
+    }
+
+    if (name === 'graduationYear') {
+      // Allow only numbers and limit to 4 digits
+      const sanitized = value.replace(/\D/g, '').substring(0, 4);
+      setFormData(prev => ({
+        ...prev,
+        [name]: sanitized
+      }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -259,9 +457,9 @@ const ProfileDetails = () => {
       dob: formData.dob,
       gender: formData.gender,
       mobile: formData.mobile,
-      city: formData.city,
-      state: formData.state,
-      country: formData.country,
+      city: formData.city === 'Other' ? customCity : formData.city,
+      state: formData.state === 'Other' ? customState : formData.state,
+      country: formData.country === 'Other' ? customCountry : formData.country,
       isDeclarationConfirmed: isFinalSubmit ? true : (formData.isInfoAccurate && formData.isTermsAccepted),
       isProfileCompleted: isFinalSubmit
     };
@@ -333,7 +531,34 @@ const ProfileDetails = () => {
   };
 
   return (
-    <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }} className="animate-fade">
+    <>
+      {/* Animated Galaxy Background */}
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        width: '100vw', 
+        height: '100vh', 
+        zIndex: -1, 
+        pointerEvents: 'none' 
+      }}>
+        <Galaxy 
+          mouseInteraction={true}
+          mouseRepulsion={true}
+          density={1.0}
+          glowIntensity={0.3}
+          saturation={0.0}
+          hueShift={140}
+          twinkleIntensity={0.3}
+          rotationSpeed={0.1}
+          repulsionStrength={1.8}
+          autoCenterRepulsion={0}
+          starSpeed={0.5}
+          speed={1.6}
+          transparent={false}
+        />
+      </div>
+      <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }} className="animate-fade">
       {/* Title */}
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '6px', fontWeight: '800', background: 'linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%)', webkitBackgroundClip: 'text', webkitTextFillColor: 'transparent' }}>
@@ -391,7 +616,7 @@ const ProfileDetails = () => {
             <span>Personal Information</span>
           </h3>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="responsive-grid grid-2">
             <div className="form-group">
               <label htmlFor="name">Full Name *</label>
               <div style={{ position: 'relative' }}>
@@ -426,7 +651,7 @@ const ProfileDetails = () => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginTop: '4px' }}>
+          <div className="responsive-grid grid-3" style={{ marginTop: '4px' }}>
             <div className="form-group">
               <label htmlFor="dob">Date of Birth *</label>
               <div style={{ position: 'relative' }}>
@@ -485,7 +710,7 @@ const ProfileDetails = () => {
             <span>Academic History</span>
           </h3>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="responsive-grid grid-2">
             <SearchableSelect
               label="College Name *"
               id="college"
@@ -537,7 +762,7 @@ const ProfileDetails = () => {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '4px' }}>
+          <div className="responsive-grid grid-2" style={{ marginTop: '4px' }}>
             <div className="form-group">
               <label htmlFor="branch">Branch/Specialization *</label>
               <select
@@ -548,7 +773,7 @@ const ProfileDetails = () => {
                 onChange={handleChange}
               >
                 <option value="">Select Specialization</option>
-                {BRANCHES.map((b, i) => (
+                {getBranchOptions(formData.degree === 'Other' ? customDegree : formData.degree).map((b, i) => (
                   <option key={i} value={b}>{b}</option>
                 ))}
               </select>
@@ -575,16 +800,14 @@ const ProfileDetails = () => {
                 onChange={handleChange}
               >
                 <option value="">Select Year</option>
-                <option value="1st Year">1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-                <option value="Other">Other</option>
+                {getCurrentYearOptions(formData.degree === 'Other' ? customDegree : formData.degree).map((yr, idx) => (
+                  <option key={idx} value={yr}>{yr}</option>
+                ))}
               </select>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '4px' }}>
+          <div className="responsive-grid grid-2" style={{ marginTop: '4px' }}>
             <div className="form-group">
               <label htmlFor="graduationYear">Graduation Year *</label>
               <div style={{ position: 'relative' }}>
@@ -628,50 +851,120 @@ const ProfileDetails = () => {
             <span>Location details</span>
           </h3>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          <div className="responsive-grid grid-3">
             <div className="form-group">
               <label htmlFor="city">City *</label>
-              <input
-                type="text"
-                id="city"
-                name="city"
-                className="form-control"
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="e.g. Chennai"
-              />
+              {formData.country === 'India' && CITIES_BY_STATE[formData.state] ? (
+                <select
+                  id="city"
+                  name="city"
+                  className="form-control"
+                  value={formData.city}
+                  onChange={handleChange}
+                >
+                  <option value="">Select City</option>
+                  {CITIES_BY_STATE[formData.state].map((ct, i) => (
+                    <option key={i} value={ct}>{ct}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  className="form-control"
+                  value={formData.city === 'Other' ? customCity : formData.city}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData(prev => ({ ...prev, city: val }));
+                  }}
+                  placeholder="e.g. Chennai"
+                />
+              )}
+              {formData.country === 'India' && CITIES_BY_STATE[formData.state] && formData.city === 'Other' && (
+                <div style={{ marginTop: '10px' }} className="animate-fade">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter custom City"
+                    value={customCity}
+                    onChange={(e) => setCustomCity(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="form-group">
               <label htmlFor="state">State *</label>
-              <input
-                type="text"
-                id="state"
-                name="state"
-                className="form-control"
-                value={formData.state}
-                onChange={handleChange}
-                placeholder="e.g. Tamil Nadu"
-              />
+              {formData.country === 'India' ? (
+                <select
+                  id="state"
+                  name="state"
+                  className="form-control"
+                  value={formData.state}
+                  onChange={handleChange}
+                >
+                  <option value="">Select State</option>
+                  {INDIAN_STATES.map((st, i) => (
+                    <option key={i} value={st}>{st}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  id="state"
+                  name="state"
+                  className="form-control"
+                  value={formData.state === 'Other' ? customState : formData.state}
+                  onChange={handleChange}
+                  placeholder="Enter State"
+                />
+              )}
+              {formData.country === 'India' && formData.state === 'Other' && (
+                <div style={{ marginTop: '10px' }} className="animate-fade">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter custom State"
+                    value={customState}
+                    onChange={(e) => setCustomState(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="form-group">
               <label htmlFor="country">Country *</label>
               <div style={{ position: 'relative' }}>
                 <Globe size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input
-                  type="text"
+                <select
                   id="country"
                   name="country"
                   className="form-control"
                   value={formData.country}
                   onChange={handleChange}
                   style={{ paddingLeft: '40px' }}
-                />
+                >
+                  <option value="India">India</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
+              {formData.country === 'Other' && (
+                <div style={{ marginTop: '10px' }} className="animate-fade">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter custom Country"
+                    value={customCountry}
+                    onChange={(e) => setCustomCountry(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+
 
         {/* SECTION 4: DECLARATIONS */}
         <div className="glass-card" style={{ padding: '28px', marginBottom: '32px', borderLeft: '3px solid var(--success)' }}>
@@ -745,6 +1038,7 @@ const ProfileDetails = () => {
         </div>
       </form>
     </div>
+    </>
   );
 };
 

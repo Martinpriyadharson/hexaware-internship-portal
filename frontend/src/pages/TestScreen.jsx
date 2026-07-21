@@ -13,6 +13,17 @@ const TestScreen = ({ stack, onTestFinished }) => {
 
   const { token } = useContext(AuthContext);
 
+  // Synchronization refs to avoid stale closures in setInterval and async operations
+  const questionsRef = useRef(questions);
+  const currentIndexRef = useRef(currentIndex);
+  const selectedAnswersRef = useRef(selectedAnswers);
+  const submittingRef = useRef(submitting);
+
+  useEffect(() => { questionsRef.current = questions; }, [questions]);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+  useEffect(() => { selectedAnswersRef.current = selectedAnswers; }, [selectedAnswers]);
+  useEffect(() => { submittingRef.current = submitting; }, [submitting]);
+
   // Fetch questions from backend
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -41,17 +52,21 @@ const TestScreen = ({ stack, onTestFinished }) => {
     fetchQuestions();
   }, [stack, token]);
 
-  // Decoupled Timer countdown management
+  // Unified Timer Hook: manages the 60s countdown and auto-advances cleanly using refs
   useEffect(() => {
-    if (loading || submitting || questions.length === 0) return;
+    if (loading || questions.length === 0) return;
 
-    // Reset timer to 60 seconds when index changes
+    // Reset countdown to 60s for the current question
     setTimeLeft(60);
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          return 0; // stop at 0
+          // Timer expired! Trigger next question using the latest refs
+          if (!submittingRef.current) {
+            handleNextQuestion();
+          }
+          return 60; // Reset timeLeft state immediately to prevent multiple triggers
         }
         return prev - 1;
       });
@@ -60,13 +75,6 @@ const TestScreen = ({ stack, onTestFinished }) => {
     return () => clearInterval(interval);
   }, [currentIndex, loading, questions.length]);
 
-  // Safe Timeout event trigger (listens to timeLeft reaching 0)
-  useEffect(() => {
-    if (timeLeft === 0 && !loading && !submitting && questions.length > 0) {
-      handleNextQuestion(true); // Auto-advance because time ran out
-    }
-  }, [timeLeft, loading, submitting, questions.length]);
-
   const handleOptionSelect = (optionIndex) => {
     setSelectedAnswers({
       ...selectedAnswers,
@@ -74,9 +82,9 @@ const TestScreen = ({ stack, onTestFinished }) => {
     });
   };
 
-  const handleNextQuestion = (isTimeout = false) => {
+  const handleNextQuestion = () => {
     // If it's the last question, submit the test
-    if (currentIndex === questions.length - 1) {
+    if (currentIndexRef.current === questionsRef.current.length - 1) {
       submitTest();
     } else {
       setCurrentIndex((prev) => prev + 1);
@@ -84,15 +92,15 @@ const TestScreen = ({ stack, onTestFinished }) => {
   };
 
   const submitTest = async () => {
-    if (submitting) return;
+    if (submittingRef.current) return;
     
     setSubmitting(true);
     setError('');
 
-    // Format answers: array of { questionId, answerIndex }
-    const formattedAnswers = questions.map((q, idx) => ({
+    // Format answers: array of { questionId, answerIndex } using latest refs
+    const formattedAnswers = questionsRef.current.map((q, idx) => ({
       questionId: q._id,
-      answerIndex: selectedAnswers[idx] !== undefined ? selectedAnswers[idx] : -1 // -1 means unanswered
+      answerIndex: selectedAnswersRef.current[idx] !== undefined ? selectedAnswersRef.current[idx] : -1 // -1 means unanswered
     }));
 
     try {
@@ -197,7 +205,7 @@ const TestScreen = ({ stack, onTestFinished }) => {
             <HelpCircle size={24} />
           </div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '500', lineHeight: '1.6' }}>
-            {currentQuestion.questionText}
+            {currentQuestion.questionText ? currentQuestion.questionText.replace(/^\[[^\]]+\]\s*/, '') : ''}
           </h2>
         </div>
 

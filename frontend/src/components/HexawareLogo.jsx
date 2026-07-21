@@ -58,13 +58,14 @@ const HexawareLogo = ({ style, ...props }) => {
       
       {/* "HEXAWARE" Text */}
       <text 
-        x="64" 
+        x="60" 
         y="34" 
         fontFamily="'Outfit', 'Inter', sans-serif" 
-        fontSize="21" 
-        fontWeight="800" 
+        fontSize="22" 
+        fontWeight="900" 
+        fontStyle="italic"
         fill="#FFFFFF" 
-        letterSpacing="0.5"
+        letterSpacing="-0.5"
       >
         HEXAWARE
       </text>

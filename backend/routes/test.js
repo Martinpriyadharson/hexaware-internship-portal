@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const Question = require('../models/Question');
 const Attempt = require('../models/Attempt');
 const User = require('../models/User');
+const { generateQuestionsForStack } = require('../utils/aiGenerator');
 
 // @route   GET api/test/questions/:stack
 // @desc    Get 30 randomized questions for a stack (excluding correct answers for security)
@@ -17,9 +18,41 @@ router.get('/questions/:stack', auth, async (req, res) => {
     if (!user || !user.isProfileCompleted) {
       return res.status(403).json({ msg: 'Profile incomplete. Please fill in all details before taking the test.' });
     }
-    // Find all questions for the stack
-    const questions = await Question.find({ stack });
-    
+
+    let questions = [];
+
+    // Try generating questions via Gemini AI if API Key is configured
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        console.log(`Attempting to generate dynamic questions via Gemini AI for stack: ${stack}...`);
+        
+        // Define a 15s timeout promise so we don't block the client indefinitely if Gemini is slow/rate-limited
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Gemini API request timed out')), 15000)
+        );
+
+        // Run Gemini generation with timeout
+        const aiQuestions = await Promise.race([
+          generateQuestionsForStack(stack),
+          timeoutPromise
+        ]);
+
+        if (aiQuestions && aiQuestions.length > 0) {
+          // Local Caching: Insert generated questions into the database
+          const savedQuestions = await Question.insertMany(aiQuestions);
+          questions = savedQuestions;
+          console.log(`Successfully generated and cached ${questions.length} questions via Gemini AI.`);
+        }
+      } catch (aiErr) {
+        console.error('Gemini generation failed or timed out. Falling back to local questions database...', aiErr.message);
+      }
+    }
+
+    // Fallback: If AI generation failed, timed out, or was skipped, fetch pre-seeded questions from the database
+    if (questions.length === 0) {
+      questions = await Question.find({ stack });
+    }
+
     if (questions.length === 0) {
       return res.status(404).json({ msg: `No questions found for stack: ${stack}` });
     }

@@ -12,6 +12,7 @@ function App() {
   const { user, token, loading, logout } = useContext(AuthContext);
   const [selectedStack, setSelectedStack] = useState(null);
   const [testResult, setTestResult] = useState(null);
+  const showVideoBg = !user || (user && user.isProfileCompleted && !selectedStack && !testResult);
 
   useEffect(() => {
     const fetchLatestAttempt = async () => {
@@ -49,7 +50,101 @@ function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }} className={!user ? 'auth-page' : ''}>
+      {/* Antigravity Floating Particles (Layered 3D Depth) */}
+      <div className="antigravity-bg">
+        {/* Layer 1: Background (Far, Small, Slow, Muted) */}
+        {Array.from({ length: 22 }).map((_, i) => {
+          const size = Math.random() * 1.2 + 1; // 1px to 2.2px
+          const left = Math.random() * 100;
+          const delay = Math.random() * 25;
+          const duration = Math.random() * 15 + 30; // 30s to 45s (very slow)
+          const driftX = Math.random() * 60 - 30;
+          return (
+            <div
+              key={`bg-${i}`}
+              className="antigravity-particle"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                left: `${left}%`,
+                animationDelay: `${delay}s`,
+                animationDuration: `${duration}s`,
+                filter: 'blur(0.5px)',
+                '--particle-opacity': 0.25,
+                '--drift-x': `${driftX}px`
+              }}
+            />
+          );
+        })}
+
+        {/* Layer 2: Midground (Medium, Normal speed) */}
+        {Array.from({ length: 14 }).map((_, i) => {
+          const size = Math.random() * 1.5 + 2.2; // 2.2px to 3.7px
+          const left = Math.random() * 100;
+          const delay = Math.random() * 20;
+          const duration = Math.random() * 10 + 20; // 20s to 30s
+          const driftX = Math.random() * 80 - 40;
+          return (
+            <div
+              key={`mid-${i}`}
+              className="antigravity-particle"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                left: `${left}%`,
+                animationDelay: `${delay}s`,
+                animationDuration: `${duration}s`,
+                '--particle-opacity': 0.45,
+                '--drift-x': `${driftX}px`
+              }}
+            />
+          );
+        })}
+
+        {/* Layer 3: Foreground (Near, Large, Fast, Bright) */}
+        {Array.from({ length: 6 }).map((_, i) => {
+          const size = Math.random() * 1.5 + 3.7; // 3.7px to 5.2px
+          const left = Math.random() * 100;
+          const delay = Math.random() * 15;
+          const duration = Math.random() * 8 + 12; // 12s to 20s (faster)
+          const driftX = Math.random() * 100 - 50;
+          return (
+            <div
+              key={`fg-${i}`}
+              className="antigravity-particle"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                left: `${left}%`,
+                animationDelay: `${delay}s`,
+                animationDuration: `${duration}s`,
+                boxShadow: '0 0 10px rgba(99, 102, 241, 0.4)',
+                '--particle-opacity': 0.65,
+                '--drift-x': `${driftX}px`
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Background Container with Milky Way Galaxy Video */}
+      {showVideoBg && (
+        <div className="video-bg-container">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            className="video-bg"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35, position: 'absolute', top: 0, left: 0 }}
+          >
+            <source src="/milky-way.mp4" type="video/mp4" />
+          </video>
+          <div className="video-bg-overlay"></div>
+        </div>
+      )}
+
       {/* Navigation */}
       <header className="navbar">
         <div className="nav-content">
@@ -106,9 +201,9 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid var(--card-border)', padding: '16px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', background: 'rgba(0,0,0,0.1)' }}>
+      <footer style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', padding: '12px 24px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem', background: 'transparent', zIndex: 10 }}>
         <div>&copy; 2026 Hexaware Technologies. All rights reserved.</div>
-        <div style={{ marginTop: '4px', fontSize: '0.75rem', opacity: 0.7 }}>Secure Intern Examination Portal &bull; Sprint 1</div>
+        <div style={{ marginTop: '6px', fontSize: '0.725rem', color: 'rgba(255, 255, 255, 0.35)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Secure Intern Examination Portal &bull; Sprint 1</div>
       </footer>
     </div>
   );

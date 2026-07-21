@@ -9,15 +9,15 @@ const ResultScreen = ({ result, stack, onReset }) => {
 
   // Determine mentor email based on selected stack
   const getMentorEmail = (selectedStack) => {
-    switch (selectedStack?.toLowerCase()) {
-      case 'java':
-        return 'java.mentor@hexaware.com';
-      case 'python':
-        return 'python.mentor@hexaware.com';
-      case 'c++':
-        return 'cpp.mentor@hexaware.com';
-      default:
-        return 'internships@hexaware.com';
+    const stackLower = selectedStack?.toLowerCase() || '';
+    if (stackLower.includes('java')) {
+      return 'java.mentor@hexaware.com';
+    } else if (stackLower.includes('python')) {
+      return 'python.mentor@hexaware.com';
+    } else if (stackLower.includes('c++') || stackLower.includes('cpp')) {
+      return 'cpp.mentor@hexaware.com';
+    } else {
+      return 'internships@hexaware.com';
     }
   };
 
@@ -64,16 +64,29 @@ ${user?.name || ''}`;
     return { subject, body };
   };
 
+  // Generate a shortened template for Web Gmail (prevents ERR_CONNECTION_RESET from URL length limit)
+  const getEmailDetailsShort = () => {
+    const subject = `Hexaware Internship Request - ${user?.name || ''} - ${stack} Track`;
+    const body = `Dear Hexaware Internship Incharge,
+
+I have successfully passed the eligibility test for the Hexaware Internship Program (${stack} Developer track) with a score of ${score}/${totalQuestions} (${percentage}%).
+
+Best regards,
+${user?.name || ''}`;
+
+    return { subject, body };
+  };
+
   // Generate Mailto Link
   const generateMailto = () => {
     const { subject, body } = getEmailDetails();
     return `mailto:${mentorEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
-  // Generate Web Gmail Link
+  // Generate Web Gmail Link (uses shortened template)
   const generateGmailLink = () => {
-    const { subject, body } = getEmailDetails();
-    return `https://mail.google.com/mail/?view=cm&fs=1&to=${mentorEmail}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const { subject, body } = getEmailDetailsShort();
+    return `https://mail.google.com/mail/#compose?to=${mentorEmail}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   return (
@@ -98,7 +111,7 @@ ${user?.name || ''}`;
           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 'var(--radius-md)', padding: '20px', textAlign: 'left', marginBottom: '32px', fontSize: '0.9rem' }}>
             <h4 style={{ marginBottom: '10px', color: 'var(--text-primary)' }}>Next Steps for Onboarding</h4>
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-              Your scores have been validated. You must now email your results directly to the Hexaware incharge for <strong>{stack} Developer</strong> track. Select your preferred method below to compose the email scorecard.
+              Your scores have been validated. Click below to compose the email to the Hexaware incharge for <strong>{stack} Developer</strong> track.
             </p>
           </div>
 

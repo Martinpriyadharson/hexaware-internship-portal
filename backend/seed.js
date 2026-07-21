@@ -147,7 +147,7 @@ otherTracks.forEach(track => {
         { q: 'Angular NgModule purpose', o: ['Database table mapper', 'To group components, directives, pipes, and services into cohesive blocks of functionality', 'HTTP request parser', 'CSS layout styling'], a: 1 }
       ];
       const selected = angularTopics[(i - 1) % angularTopics.length];
-      qText = `[${track}] What is the primary characteristic of: ${selected.q}?`;
+      qText = `What is the primary characteristic of ${selected.q}?`;
       opt = selected.o;
       ans = selected.a;
     } 
@@ -160,7 +160,7 @@ otherTracks.forEach(track => {
         { q: 'Task.WhenAll vs Task.WaitAll', o: ['They are identical', 'WhenAll creates an awaitable task; WaitAll blocks the execution thread synchronously', 'WaitAll is asynchronous', 'WhenAll is for integers only'], a: 1 }
       ];
       const selected = netTopics[(i - 1) % netTopics.length];
-      qText = `[${track}] What is the primary function or behavior of: ${selected.q}?`;
+      qText = `What is the primary function or behavior of ${selected.q}?`;
       opt = selected.o;
       ans = selected.a;
     }
@@ -173,7 +173,7 @@ otherTracks.forEach(track => {
         { q: 'Random Forest bagging concept', o: ['A single decision tree optimizer', 'Ensemble method training multiple decision trees in parallel on bootstrapped datasets to reduce variance', 'Data warehousing tool', 'Neural network layer'], a: 1 }
       ];
       const selected = mlTopics[(i - 1) % mlTopics.length];
-      qText = `[${track}] In machine learning pipelines, explain: ${selected.q}.`;
+      qText = `In machine learning pipelines, how is ${selected.q} defined?`;
       opt = selected.o;
       ans = selected.a;
     }
@@ -186,7 +186,7 @@ otherTracks.forEach(track => {
         { q: 'Vector Embeddings function', o: ['Stores text files', 'Converts text into high-dimensional numerical vectors capturing semantic meaning for similarity search', 'Compiles python scripts', 'Builds neural networks'], a: 1 }
       ];
       const selected = genAiTopics[(i - 1) % genAiTopics.length];
-      qText = `[${track}] In Generative AI systems, what is the role of: ${selected.q}?`;
+      qText = `In Generative AI systems, what is the role of ${selected.q}?`;
       opt = selected.o;
       ans = selected.a;
     }
@@ -199,7 +199,7 @@ otherTracks.forEach(track => {
         { q: 'Prometheus metric polling method', o: ['Push metric updates', 'Pull/Scrape model, regularly retrieving metrics endpoints from configured targets', 'Static database connections', 'File log readers'], a: 1 }
       ];
       const selected = devopsTopics[(i - 1) % devopsTopics.length];
-      qText = `[${track}] In DevOps environments, explain: ${selected.q}.`;
+      qText = `In DevOps environments, how is ${selected.q} defined and utilized?`;
       opt = selected.o;
       ans = selected.a;
     }
@@ -212,21 +212,195 @@ otherTracks.forEach(track => {
         { q: 'Symmetric vs Asymmetric encryption speed', o: ['Asymmetric is faster', 'Symmetric is much faster and used for bulk data; Asymmetric is slower and used for key exchanges', 'They are identical', 'Encryption speeds are constant'], a: 1 }
       ];
       const selected = cyberTopics[(i - 1) % cyberTopics.length];
-      qText = `[${track}] In Cybersecurity frameworks, explain: ${selected.q}.`;
+      qText = `In Cybersecurity frameworks, how is ${selected.q} defined?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Mobile App Development') {
+      const mobileTopics = [
+        { q: 'Flutter Widget Tree & State management', o: ['Modifying SQL databases', 'Using Stateless/StatefulWidgets to manage UI hierarchy and reactive rendering', 'Creating server endpoints', 'Running python scripts'], a: 1 },
+        { q: 'React Native Bridge architecture', o: ['Compiling C# classes', 'Asynchronous communication bridge between JavaScript thread and Native OS threads', 'Loading database pools', 'CSS grid systems'], a: 1 },
+        { q: 'SwiftUI Declarative layout', o: ['Connecting SQL servers', 'Declarative UI design using view hierarchies and state-driven bindings', 'Writing backend routes', 'Running docker containers'], a: 1 },
+        { q: 'Android Activity/Fragment Lifecycle', o: ['Bypasses memory caches', 'Component states (onCreate, onStart, onResume, onPause, onDestroy) managed by the OS', 'Static server controller', 'File system driver'], a: 1 },
+        { q: 'Kotlin Coroutines dispatchers', o: ['Dispatchers.Main for UI, Dispatchers.IO for background network/disk I/O, Dispatchers.Default for CPU tasks', 'They are identical', 'Only for integers', 'Running local SQL queries'], a: 0 }
+      ];
+      const selected = mobileTopics[(i - 1) % mobileTopics.length];
+      qText = `What is the primary function or behavior of ${selected.q}?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Frontend Development') {
+      const frontendTopics = [
+        { q: 'Virtual DOM rendering concept', o: ['Direct SQL database tables updates', 'In-memory lightweight copy of real DOM elements used to compute changes efficiently and batch real DOM updates', 'Backend server router', 'File system storage'], a: 1 },
+        { q: 'CSS Flexbox vs Grid layout', o: ['No difference', 'Flexbox is designed for 1-dimensional layouts (row/column); Grid is designed for 2-dimensional layouts', 'Flexbox is only for fonts', 'Grid is synchronous only'], a: 1 },
+        { q: 'Browser Event Bubbling phase', o: ['Database query optimization', 'Event propagates from the target element upward through its ancestors in the DOM tree', 'Minifying style sheets', 'Handling security tokens'], a: 1 },
+        { q: 'JavaScript Closures definition', o: ['Connecting to servers', 'A function that retains access to its lexical scope even when the function is executed outside that scope', 'Deleting local arrays', 'Designing HTML templates'], a: 1 },
+        { q: 'Single Page Application (SPA) routing', o: ['Loading complete new pages from server', 'Handling navigation client-side by updating the history API and dynamically replacing DOM elements', 'Distributed server clusters', 'Running backend scripts'], a: 1 }
+      ];
+      const selected = frontendTopics[(i - 1) % frontendTopics.length];
+      qText = `Explain the primary characteristic of: ${selected.q}.`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Backend Development') {
+      const backendTopics = [
+        { q: 'RESTful API design principles', o: ['Using HTML structures only', 'Stateless client-server architecture utilizing standard HTTP methods (GET, POST, PUT, DELETE) and resource URIs', 'Creating user forms', 'Compiling code to binary'], a: 1 },
+        { q: 'Database Sharding & Replication', o: ['Deleting records', 'Sharding partitions data horizontally across servers; Replication copies data to ensure high availability', 'Running loops', 'Designing web screens'], a: 1 },
+        { q: 'Microservices API Gateway role', o: ['Direct database connection', 'A single entry point that handles request routing, authentication, rate limiting, and protocol translation', 'Styles visual layout', 'File logging reader'], a: 1 },
+        { q: 'Caching strategies (Redis)', o: ['Stores data on CPU stack', 'In-memory data structure store used to cache database queries and reduce backend latency', 'Compresses image files', 'Runs background processes'], a: 1 },
+        { q: 'Database indexing cost/benefit', o: ['Speeds up writes but slows reads', 'Speeds up read query performance but slows down insert/update writes and consumes extra storage space', 'No storage usage', 'Deletes primary keys'], a: 1 }
+      ];
+      const selected = backendTopics[(i - 1) % backendTopics.length];
+      qText = `Which approach is recommended for managing ${selected.q}?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Full Stack Development') {
+      const fsTopics = [
+        { q: 'Three-Tier Architecture components', o: ['One single file', 'Presentation tier (frontend), Application tier (backend logic), and Data tier (database)', 'CPU compiler levels', 'Web sockets, proxies, and caches'], a: 1 },
+        { q: 'CORS (Cross-Origin Resource Sharing)', o: ['Secures local passwords', 'A browser security mechanism that uses HTTP headers to permit scripts on one origin to access resources on another', 'Minifies source code', 'Creates database logs'], a: 1 },
+        { q: 'WebSocket protocol vs HTTP', o: ['No difference', 'WebSockets provide full-duplex persistent connections for real-time data; HTTP is request-response based', 'HTTP is faster for streams', 'WebSockets are only for integers'], a: 1 },
+        { q: 'Session vs Token-based auth', o: ['They are identical', 'Session stores state on the server; Token-based (JWT) is stateless and stored on the client', 'Token is only for databases', 'Session is asynchronous only'], a: 1 },
+        { q: 'Database connection pooling', o: ['Bypasses server controllers', 'Maintaining a cache of open database connections to reuse them and avoid connection creation overhead', 'Saves CPU clock cycles', 'Validates form variables'], a: 1 }
+      ];
+      const selected = fsTopics[(i - 1) % fsTopics.length];
+      qText = `How should ${selected.q} be addressed in a production-ready system?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Data Science') {
+      const dsTopics = [
+        { q: 'Supervised vs Unsupervised learning', o: ['No difference', 'Supervised uses labeled training data; Unsupervised finds patterns in unlabeled data', 'Unsupervised is only for SQL', 'Supervised is faster'], a: 1 },
+        { q: 'Overfitting mitigation techniques', o: ['Adding more parameters', 'Using regularization (L1/L2), cross-validation, pruning, and increasing training data', 'Clearing temp directories', 'Static bias additions'], a: 1 },
+        { q: 'Confusion Matrix evaluation', o: ['Displays CPU load', 'A table layout to visualize the performance of a classification algorithm (TP, FP, TN, FN)', 'Calculates memory sizes', 'Sorts database indexes'], a: 1 },
+        { q: 'A/B Testing statistical significance', o: ['Arbitrary decision boundaries', 'Hypothesis testing using p-values to determine if variant differences are statistically significant or due to chance', 'Drawing graphics', 'Compressing audio files'], a: 1 },
+        { q: 'Feature Engineering goal', o: ['To compile applications', 'Selecting, transforming, and combining raw variables to create informative features for machine learning models', 'To backup data tables', 'To run database queries'], a: 1 }
+      ];
+      const selected = dsTopics[(i - 1) % dsTopics.length];
+      qText = `When designing a data science pipeline, what is the primary consideration for ${selected.q}?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Data Analytics') {
+      const daTopics = [
+        { q: 'SQL JOIN operations differences', o: ['No differences', 'INNER JOIN returns matching rows; LEFT JOIN returns all rows from left and matching rows from right', 'LEFT JOIN is only for numbers', 'INNER JOIN is always asynchronous'], a: 1 },
+        { q: 'Data Wrangling/Cleaning purpose', o: ['Formatting css classes', 'Identifying and correcting errors, missing values, duplicates, and inconsistencies in raw datasets', 'Starting local servers', 'Creating code indexes'], a: 1 },
+        { q: 'Descriptive vs Inferential statistics', o: ['They are identical', 'Descriptive statistics summarize data; Inferential statistics make predictions/generalizations about a population', 'Descriptive is for deep learning', 'Inferential is synchronous only'], a: 1 },
+        { q: 'KPI (Key Performance Indicator) definition', o: ['System CPU speed metric', 'Quantifiable measure used to evaluate the success of an organization or activity in meeting objectives', 'Database backup size', 'Web server log entry'], a: 1 },
+        { q: 'Pandas GroupBy operation', o: ['Saves data frames to CSV', 'Splits data into groups based on criteria, applies aggregate functions, and combines the results', 'Validates user passwords', 'Styles frontend grids'], a: 1 }
+      ];
+      const selected = daTopics[(i - 1) % daTopics.length];
+      qText = `Which approach is recommended for managing ${selected.q}?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Data Engineering') {
+      const deTopics = [
+        { q: 'ETL (Extract, Transform, Load) pipeline', o: ['Deleting data records', 'Extracting data from sources, transforming format/schema, and loading it into target storage', 'Running loops', 'Designing web forms'], a: 1 },
+        { q: 'Data Warehouse vs Data Lake', o: ['No difference', 'Data Warehouse stores structured/processed data; Data Lake stores raw structured or unstructured data', 'Data Lake is faster for queries', 'Data Warehouse is only for text files'], a: 1 },
+        { q: 'Apache Spark distributed processing', o: ['Single-threaded processor', 'In-memory cluster computing framework designed for fast distributed data processing at scale', 'Styles layout grids', 'Local file compiler'], a: 1 },
+        { q: 'Database Normalization (1NF, 2NF, 3NF)', o: ['Multiplying data records', 'Organizing database tables to reduce data redundancy and improve data integrity', 'Hashing user passwords', 'Web cookies management'], a: 1 },
+        { q: 'Hadoop HDFS architecture', o: ['Single memory block', 'Distributed file system designed to run on commodity hardware, providing fault tolerance and high throughput', 'Static database connections', 'File log readers'], a: 1 }
+      ];
+      const selected = deTopics[(i - 1) % deTopics.length];
+      qText = `Explain the standard implementation strategy for ${selected.q}.`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Computer Vision') {
+      const cvTopics = [
+        { q: 'Convolutional Neural Network (CNN)', o: ['Direct SQL database tables updates', 'Deep learning architecture specifically designed for processing structured grid data like images', 'Backend server router', 'File system storage'], a: 1 },
+        { q: 'Image Segmentation vs Object Detection', o: ['No difference', 'Object detection locates bounding boxes; Image segmentation classifies every pixel in the image', 'Segmentation is faster', 'Detection is synchronous only'], a: 1 },
+        { q: 'OpenCV library purpose', o: ['Database query optimization', 'Open-source library of programming functions mainly aimed at real-time computer vision', 'Minifying style sheets', 'Handling security tokens'], a: 1 },
+        { q: 'Data Augmentation for images', o: ['Deleting local arrays', 'Generating new training samples by applying rotations, scaling, flips, and color adjustments to existing images', 'Connecting to servers', 'Designing HTML templates'], a: 1 },
+        { q: 'Kernel/Filter in image convolution', o: ['Distributed server clusters', 'Small matrix used for applying effects like blurring, sharpening, embossing, or edge detection', 'Loading complete new pages', 'Running backend scripts'], a: 1 }
+      ];
+      const selected = cvTopics[(i - 1) % cvTopics.length];
+      qText = `What is the primary function or behavior of ${selected.q}?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Natural Language Processing (NLP)') {
+      const nlpTopics = [
+        { q: 'Tokenization and Lemmatization', o: ['Using HTML structures only', 'Tokenization splits text into words/tokens; Lemmatization reduces words to their base dictionary form', 'Creating user forms', 'Compiling code to binary'], a: 1 },
+        { q: 'TF-IDF (Term Frequency-Inverse Document Frequency)', o: ['Deleting records', 'Numerical statistic reflecting how important a word is to a document in a collection or corpus', 'Running loops', 'Designing web screens'], a: 1 },
+        { q: 'Word Embeddings (Word2Vec, GloVe)', o: ['Direct database connection', 'Representing words in coordinate space where semantically similar words are positioned close to each other', 'Styles visual layout', 'File logging reader'], a: 1 },
+        { q: 'Named Entity Recognition (NER)', o: ['Stores data on CPU stack', 'Subtask of information extraction that identifies and classifies named entities in text (names, dates, locations)', 'Compresses image files', 'Runs background processes'], a: 1 },
+        { q: 'Recurrent Neural Networks (RNN) sequence model', o: ['Speeds up writes but slows reads', 'Neural networks with loops allowing information to persist, designed for processing sequential data', 'No storage usage', 'Deletes primary keys'], a: 1 }
+      ];
+      const selected = nlpTopics[(i - 1) % nlpTopics.length];
+      qText = `In NLP pipelines, what is the role of ${selected.q}?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'MLOps') {
+      const mlopsTopics = [
+        { q: 'Model Drift detection', o: ['One single file', 'The decay of model predictive performance over time due to changes in real-world data distributions', 'CPU compiler levels', 'Web sockets, proxies, and caches'], a: 1 },
+        { q: 'MLflow model registry', o: ['Secures local passwords', 'Centralized model store providing API and UI to collaboratively manage the full lifecycle of ML models', 'Minifies source code', 'Creates database logs'], a: 1 },
+        { q: 'Feature Store in ML pipelines', o: ['No difference', 'Central repository storing curated features to share and reuse them across training and serving pipelines', 'HTTP is faster for streams', 'WebSockets are only for integers'], a: 1 },
+        { q: 'Continuous Training (CT) triggers', o: ['They are identical', 'Automatically retraining models in production based on performance decay, schedule, or new data arrivals', 'Token is only for databases', 'Session is asynchronous only'], a: 1 },
+        { q: 'Model deployment strategies (Shadow/Canary)', o: ['Bypasses server controllers', 'Canary routes a fraction of traffic to the new model; Shadow routes all traffic but discards outputs to test performance', 'Saves CPU clock cycles', 'Validates form variables'], a: 1 }
+      ];
+      const selected = mlopsTopics[(i - 1) % mlopsTopics.length];
+      qText = `How should ${selected.q} be addressed in a production-ready ML pipeline?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Cloud Computing') {
+      const cloudTopics = [
+        { q: 'IaaS vs PaaS vs SaaS', o: ['No difference', 'IaaS provides raw VMs/networking; PaaS provides application runtimes; SaaS provides end-user software', 'SaaS is only for SQL', 'PaaS is faster'], a: 1 },
+        { q: 'Cloud Auto-Scaling types', o: ['Adding more parameters', 'Horizontal scaling adds/removes instances; Vertical scaling increases/decreases instance resources (CPU/RAM)', 'Clearing temp directories', 'Static bias additions'], a: 1 },
+        { q: 'Serverless Computing (FaaS) execution', o: ['Displays CPU load', 'Event-driven execution model where cloud providers provision and manage servers automatically, billing by execution time', 'Calculates memory sizes', 'Sorts database indexes'], a: 1 },
+        { q: 'Virtual Private Cloud (VPC) subnets', o: ['Arbitrary decision boundaries', 'Partitioning a private network range into public subnets (routing to internet gateway) and private subnets', 'Drawing graphics', 'Compressing audio files'], a: 1 },
+        { q: 'Cloud Shared Responsibility Model', o: ['To compile applications', 'Cloud provider secures the infrastructure; Cloud customer secures data, code, configurations, and access', 'To backup data tables', 'To run database queries'], a: 1 }
+      ];
+      const selected = cloudTopics[(i - 1) % cloudTopics.length];
+      qText = `What is the industry best practice regarding ${selected.q}?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'UI/UX Design') {
+      const uiuxTopics = [
+        { q: 'Fitts Law in user interfaces', o: ['No differences', 'Predicts that the time required to rapidly move to a target is a function of the target distance and size', 'LEFT JOIN is only for numbers', 'INNER JOIN is always asynchronous'], a: 1 },
+        { q: 'WCAG Accessibility standards', o: ['Formatting css classes', 'Web Content Accessibility Guidelines ensuring websites are perceivable, operable, understandable, and robust for disabled users', 'Starting local servers', 'Creating code indexes'], a: 1 },
+        { q: 'Wireframe vs Mockup vs Prototype', o: ['They are identical', 'Wireframe is low-fidelity structure; Mockup is static high-fidelity visual; Prototype is interactive model', 'Mockup is for deep learning', 'Inferential is synchronous only'], a: 1 },
+        { q: 'Mobile-First Responsive design', o: ['System CPU speed metric', 'Designing the mobile layout first, then scaling up for larger screens using CSS media queries', 'Database backup size', 'Web server log entry'], a: 1 },
+        { q: 'User Persona purpose', o: ['Saves data frames to CSV', 'Semi-fictional representation of target users based on data and research, guiding design choices', 'Validates user passwords', 'Styles frontend grids'], a: 1 }
+      ];
+      const selected = uiuxTopics[(i - 1) % uiuxTopics.length];
+      qText = `When designing responsive interfaces, what is the primary consideration for ${selected.q}?`;
+      opt = selected.o;
+      ans = selected.a;
+    }
+    else if (track === 'Manual Testing') {
+      const qaTopics = [
+        { q: 'Black Box vs White Box testing', o: ['Deleting records', 'Black Box tests functionality without knowing code; White Box tests internal code structure and logic', 'Running loops', 'Designing web forms'], a: 1 },
+        { q: 'Software Testing Life Cycle (STLC)', o: ['No difference', 'Sequence of activities executed during the testing process (Requirement Analysis, Test Planning, Execution, Closure)', 'Data Lake is faster for queries', 'Data Warehouse is only for text files'], a: 1 },
+        { q: 'Boundary Value Analysis (BVA)', o: ['Single-threaded processor', 'Black-box test design technique focused on testing values at the boundaries of input ranges', 'Styles layout grids', 'Local file compiler'], a: 1 },
+        { q: 'Defect Severity vs Priority', o: ['Multiplying data records', 'Severity is the technical impact of a bug; Priority is the business urgency to fix the bug', 'Hashing user passwords', 'Web cookies management'], a: 1 },
+        { q: 'Regression Testing objective', o: ['Single memory block', 'Testing existing software to ensure that recent code modifications have not introduced new bugs or regressions', 'Static database connections', 'File log readers'], a: 1 }
+      ];
+      const selected = qaTopics[(i - 1) % qaTopics.length];
+      qText = `Explain the standard implementation strategy for ${selected.q}.`;
       opt = selected.o;
       ans = selected.a;
     }
     else {
-      // General advanced questions for other specializations
+      // General advanced fallback (just in case)
       const generalTopics = [
         { q: 'Scale & Performance Optimization', o: ['Increasing code sizes', 'Caching, database indexing, horizontal scaling, and asynchronous processing', 'Static variable allocations', 'Resetting active ports'], a: 1 },
         { q: 'Design Patterns & MVC architecture', o: ['Using one file only', 'Separation of concerns into Model, View, and Controller layers', 'Creating database backups', 'Minifying style sheets'], a: 1 },
         { q: 'Security & Access Control (IAM)', o: ['Public API bindings', 'Role-Based Access Control (RBAC) and Principle of Least Privilege', 'Disabling firewalls', 'Using local variables'], a: 1 },
-        { q: 'Data pipeline ETL execution', o: ['Deleting data records', 'Extracting raw data, transforming format/schema, and loading it into target storage', 'Running loops', 'Designing web forms'], a: 1 },
         { q: 'System Design & Load Balancing', o: ['Connecting all clients to one server', 'Distributing incoming application traffic across multiple backend servers to optimize resource use', 'Compressing media files', 'Defining REST endpoints'], a: 1 }
       ];
       const selected = generalTopics[(i - 1) % generalTopics.length];
-      qText = `[${track}] Describe the best practice for: ${selected.q}.`;
+      const templates = [
+        `What is the industry best practice regarding ${selected.q}?`,
+        `How should ${selected.q} be addressed in a production-ready system?`,
+        `When designing a scalable architecture, what is the primary consideration for ${selected.q}?`,
+        `Explain the standard implementation strategy for ${selected.q}.`
+      ];
+      qText = templates[(i - 1) % templates.length];
       opt = selected.o;
       ans = selected.a;
     }
