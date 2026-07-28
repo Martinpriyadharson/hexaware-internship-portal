@@ -22,6 +22,10 @@ mongoose
 // Routes mounting
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/test', require('./routes/test'));
+app.use('/api/mentor', require('./routes/mentor'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/tasks', require('./routes/tasks'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

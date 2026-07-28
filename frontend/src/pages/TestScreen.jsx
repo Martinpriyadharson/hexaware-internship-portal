@@ -11,7 +11,7 @@ const TestScreen = ({ stack, onTestFinished }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const { token } = useContext(AuthContext);
+  const { token, loadUser } = useContext(AuthContext);
 
   // Synchronization refs to avoid stale closures in setInterval and async operations
   const questionsRef = useRef(questions);
@@ -28,19 +28,25 @@ const TestScreen = ({ stack, onTestFinished }) => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/test/questions/${stack}`, {
+        const res = await fetch(`http://localhost:5000/api/test/questions/${encodeURIComponent(stack)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
+
+        let data;
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error(text || `Server error (${res.status})`);
+        }
         
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.msg || 'Failed to fetch test questions');
+          throw new Error(data?.msg || `Failed to fetch test questions (${res.status})`);
         }
 
-        const data = await res.json();
         setQuestions(data);
       } catch (err) {
         setError(err.message);
@@ -122,6 +128,7 @@ const TestScreen = ({ stack, onTestFinished }) => {
       }
 
       const data = await res.json();
+      if (loadUser) await loadUser();
       onTestFinished(data);
     } catch (err) {
       setError(err.message);
@@ -147,13 +154,44 @@ const TestScreen = ({ stack, onTestFinished }) => {
 
   if (error) {
     return (
-      <div className="glass-card" style={{ padding: '32px', textAlign: 'center', maxWidth: '500px', margin: '0 auto' }} className="animate-fade">
+      <div className="glass-card animate-fade" style={{ padding: '32px', textAlign: 'center', maxWidth: '500px', margin: '40px auto' }}>
         <AlertTriangle size={48} style={{ color: 'var(--danger)', marginBottom: '16px' }} />
         <h2 style={{ fontSize: '1.5rem', marginBottom: '12px' }}>Assessment Load Failure</h2>
         <div className="error-alert">
           <span>{error}</span>
         </div>
-        <button onClick={() => window.location.reload()} className="glow-btn" style={{ marginTop: '16px' }}>
+        <button 
+          onClick={() => {
+            setError(null);
+            setLoading(true);
+            const refetch = async () => {
+              try {
+                const res = await fetch(`http://localhost:5000/api/test/questions/${encodeURIComponent(stack)}`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+                let data;
+                const text = await res.text();
+                try {
+                  data = JSON.parse(text);
+                } catch (e) {
+                  throw new Error(text || `Server error (${res.status})`);
+                }
+                if (!res.ok) throw new Error(data?.msg || `Failed to fetch test questions (${res.status})`);
+                setQuestions(data);
+              } catch (err) {
+                setError(err.message);
+              } finally {
+                setLoading(false);
+              }
+            };
+            refetch();
+          }} 
+          className="glow-btn" 
+          style={{ marginTop: '16px', margin: '16px auto 0 auto' }}
+        >
           Retry Loading Test
         </button>
       </div>

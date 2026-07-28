@@ -110,7 +110,15 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(profileData),
       });
 
-      const data = await res.json();
+      let data;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        console.error('Non-JSON server response:', text);
+        return { success: false, msg: 'Server error. Please ensure backend server is running on port 5000.' };
+      }
 
       if (!res.ok) {
         return { success: false, msg: data.msg || 'Failed to update profile' };
@@ -120,7 +128,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       setError(err.message);
-      return { success: false, msg: err.message };
+      return { success: false, msg: err.message || 'Error connecting to server.' };
     }
   };
 

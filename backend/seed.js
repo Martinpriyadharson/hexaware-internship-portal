@@ -440,18 +440,150 @@ Object.keys(questionDatabase).forEach(key => {
   finalQuestionsList.push(...items);
 });
 
+const bcrypt = require('bcryptjs');
+const User = require('./models/User');
+const Mentor = require('./models/Mentor');
+const Candidate = require('./models/Candidate');
+const Assessment = require('./models/Assessment');
+const AssessmentResult = require('./models/AssessmentResult');
+const Notification = require('./models/Notification');
+
 async function seedDatabase() {
   try {
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/hexaware-portal');
     console.log('MongoDB connected for seeding...');
     
-    // Clear existing questions
+    // Clear existing collections
     await Question.deleteMany();
-    console.log('Existing questions removed.');
+    await User.deleteMany();
+    await Mentor.deleteMany();
+    await Candidate.deleteMany();
+    await Assessment.deleteMany();
+    await AssessmentResult.deleteMany();
+    await Notification.deleteMany();
+    console.log('Existing collections cleared.');
 
-    // Insert new questions
+    // 1. Insert Questions
     await Question.insertMany(finalQuestionsList);
     console.log(`Seeded ${finalQuestionsList.length} questions successfully across all 22 stacks!`);
+
+    // 2. Seed Mentor Account
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    const mentorUser = new User({
+      name: 'Martin (Senior Mentor)',
+      email: 'mentor@hexaware.com',
+      password: hashedPassword,
+      role: 'Mentor',
+      isProfileCompleted: true
+    });
+    await mentorUser.save();
+
+    const mentorDoc = new Mentor({
+      userId: mentorUser._id,
+      department: 'Technology & AI',
+      specialization: 'Full Stack Engineering'
+    });
+    await mentorDoc.save();
+    console.log('Default Mentor account seeded: mentor@hexaware.com / password123');
+
+    // 3. Seed 24 Candidates
+    const candidateData = [
+      { name: 'Karthik S', email: 'karthik@college.edu', stack: 'Python Full Stack', score: 92.5, status: 'Completed', date: 'May 27, 2026', college: 'Anna University' },
+      { name: 'Priya R', email: 'priya@college.edu', stack: 'Java Full Stack', score: 76, status: 'Completed', date: 'May 27, 2026', college: 'PSG Tech' },
+      { name: 'Arun K', email: 'arun@college.edu', stack: 'React Developer', score: 88, status: 'Completed', date: 'May 27, 2026', college: 'SRM Institute' },
+      { name: 'Vishal M', email: 'vishal@college.edu', stack: 'Data Structures', score: 68, status: 'Completed', date: 'May 26, 2026', college: 'VIT Vellore' },
+      { name: 'Sneha R', email: 'sneha@college.edu', stack: 'Aptitude & Logic', score: 60, status: 'Pending', date: 'May 26, 2026', college: 'SSN College' },
+      { name: 'Anish V', email: 'anish@college.edu', stack: 'MERN Stack', score: 95, status: 'Completed', date: 'May 25, 2026', college: 'Anna University' },
+      { name: 'Bhavna M', email: 'bhavna@college.edu', stack: 'Angular Developer', score: 82, status: 'Completed', date: 'May 25, 2026', college: 'SASTRA University' },
+      { name: 'Charan T', email: 'charan@college.edu', stack: 'DevOps & Cloud', score: 90, status: 'Completed', date: 'May 24, 2026', college: 'PSG Tech' },
+      { name: 'Divya P', email: 'divya@college.edu', stack: 'Data Science', score: 84, status: 'Completed', date: 'May 24, 2026', college: 'Loyola College' },
+      { name: 'Elango K', email: 'elango@college.edu', stack: 'Cyber Security', score: 81, status: 'Completed', date: 'May 23, 2026', college: 'SRM Institute' },
+      { name: 'Farhana S', email: 'farhana@college.edu', stack: 'AI & Machine Learning', score: 89, status: 'Completed', date: 'May 23, 2026', college: 'VIT Vellore' },
+      { name: 'Gautam N', email: 'gautam@college.edu', stack: 'Android App Dev', score: 78, status: 'Completed', date: 'May 22, 2026', college: 'Anna University' },
+      { name: 'Harini B', email: 'harini@college.edu', stack: 'iOS App Dev', score: 74, status: 'Completed', date: 'May 22, 2026', college: 'SSN College' },
+      { name: 'Ibrahim H', email: 'ibrahim@college.edu', stack: 'Flutter App Dev', score: 71, status: 'Completed', date: 'May 21, 2026', college: 'PSG Tech' },
+      { name: 'Janani L', email: 'janani@college.edu', stack: 'Spring Boot Microservices', score: 69, status: 'Completed', date: 'May 21, 2026', college: 'SASTRA University' },
+      { name: 'Kavya S', email: 'kavya@college.edu', stack: 'Node.js Backend', score: 64, status: 'Completed', date: 'May 20, 2026', college: 'SRM Institute' },
+      { name: 'Lokesh W', email: 'lokesh@college.edu', stack: 'Django Backend', score: 62, status: 'Completed', date: 'May 20, 2026', college: 'Loyola College' },
+      { name: 'Meena D', email: 'meena@college.edu', stack: 'UI/UX Design', score: 55, status: 'Pending', date: 'May 19, 2026', college: 'Anna University' },
+      { name: 'Naveen C', email: 'naveen@college.edu', stack: 'SQL & Database Design', score: 52, status: 'Pending', date: 'May 19, 2026', college: 'VIT Vellore' },
+      { name: 'Omkar G', email: 'omkar@college.edu', stack: 'Big Data Engineering', score: 48, status: 'Pending', date: 'May 18, 2026', college: 'PSG Tech' },
+      { name: 'Pavithra E', email: 'pavithra@college.edu', stack: 'Blockchain & Web3', score: 45, status: 'Pending', date: 'May 18, 2026', college: 'SSN College' },
+      { name: 'Qadir M', email: 'qadir@college.edu', stack: 'Embedded Systems', score: 42, status: 'Pending', date: 'May 17, 2026', college: 'SASTRA University' },
+      { name: 'Rithika F', email: 'rithika@college.edu', stack: 'Software Testing (QA)', score: 35, status: 'Failed', date: 'May 17, 2026', college: 'Loyola College' },
+      { name: 'Siddharth J', email: 'siddharth@college.edu', stack: 'C++ Systems Programming', score: 30, status: 'Failed', date: 'May 16, 2026', college: 'SRM Institute' }
+    ];
+
+    const candidateIds = [];
+
+    for (const cand of candidateData) {
+      const u = new User({
+        name: cand.name,
+        email: cand.email,
+        password: hashedPassword,
+        role: 'Candidate',
+        college: cand.college,
+        degree: 'B.Tech',
+        branch: 'Computer Science',
+        preferredStack: cand.stack,
+        isProfileCompleted: true
+      });
+      await u.save();
+      candidateIds.push(u._id);
+
+      const extra = new Candidate({
+        userId: u._id,
+        photo: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cand.name)}`,
+        department: 'Computer Science',
+        skills: [cand.stack.split(' ')[0], 'JavaScript', 'Problem Solving'],
+        remarks: cand.score >= 80 ? 'Exceptional candidate with strong fundamentals.' : 'Good potential, recommended for technical interview.'
+      });
+      await extra.save();
+
+      // Create Result
+      const totalQ = 30;
+      const correctCount = Math.round((cand.score / 100) * totalQ);
+
+      const result = new AssessmentResult({
+        candidateId: u._id,
+        assessmentName: cand.stack + ' Test',
+        score: correctCount,
+        totalQuestions: totalQ,
+        percentage: cand.score,
+        status: cand.status,
+        remarks: cand.status === 'Completed' ? 'Evaluated and approved' : 'Awaiting review',
+        evaluatedBy: mentorUser._id,
+        createdAt: new Date(cand.date)
+      });
+      await result.save();
+    }
+
+    // Link Candidates to Mentor
+    mentorDoc.assignedCandidates = candidateIds;
+    await mentorDoc.save();
+
+    // 4. Seed 12 Assessments
+    for (let i = 0; i < 12; i++) {
+      const ass = new Assessment({
+        title: `${candidateData[i].stack} Assessment`,
+        stack: candidateData[i].stack,
+        difficulty: i % 3 === 0 ? 'Hard' : i % 2 === 0 ? 'Medium' : 'Easy',
+        duration: 30,
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        createdBy: mentorUser._id
+      });
+      await ass.save();
+    }
+
+    // 5. Seed Notifications for Mentor
+    const notifications = [
+      { recipient: mentorUser._id, type: 'AssignmentCompleted', title: 'Test Completed', message: 'Karthik S submitted Python Full Stack Test with 92.5% score.' },
+      { recipient: mentorUser._id, type: 'EvaluationPending', title: 'Review Pending', message: 'Sneha R submitted Aptitude & Logic Test. Review required.' },
+      { recipient: mentorUser._id, type: 'AssessmentAssigned', title: 'Assessment Active', message: 'MERN Stack Assessment assigned to Anish V.' }
+    ];
+    await Notification.insertMany(notifications);
+
+    console.log('Seeded 24 Candidates, 12 Assessments, and 24 Results successfully!');
 
     mongoose.connection.close();
     console.log('Database connection closed.');

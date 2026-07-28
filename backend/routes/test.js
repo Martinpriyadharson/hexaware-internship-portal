@@ -13,10 +13,15 @@ router.get('/questions/:stack', auth, async (req, res) => {
   const { stack } = req.params;
 
   try {
-    // Verify user profile is completed
     const user = await User.findById(req.user.id);
-    if (!user || !user.isProfileCompleted) {
-      return res.status(403).json({ msg: 'Profile incomplete. Please fill in all details before taking the test.' });
+    if (!user) {
+      return res.status(404).json({ msg: 'Candidate user not found' });
+    }
+
+    // Auto-complete profile flag if candidate is entering assessment
+    if (!user.isProfileCompleted) {
+      user.isProfileCompleted = true;
+      await user.save();
     }
 
     let questions = [];
@@ -50,7 +55,21 @@ router.get('/questions/:stack', auth, async (req, res) => {
 
     // Fallback: If AI generation failed, timed out, or was skipped, fetch pre-seeded questions from the database
     if (questions.length === 0) {
-      questions = await Question.find({ stack });
+      // Flexible matching for stack names (e.g. ".NET Full Stack", "C# .NET", "Java", "Python", "MERN")
+      const keywords = stack.split(/[\s&,/]+/).filter(w => w.length > 1);
+      const regexPattern = keywords.map(k => k.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).join('|');
+      
+      questions = await Question.find({ 
+        stack: { $regex: new RegExp(regexPattern || stack, 'i') } 
+      });
+    }
+
+    // Secondary Fallback: Filter out generic placeholder text questions
+    if (questions.length === 0) {
+      questions = await Question.find({ questionText: { $not: /Technical Assessment Question #/ } });
+    }
+    if (questions.length === 0) {
+      questions = await Question.find({});
     }
 
     if (questions.length === 0) {
@@ -77,8 +96,8 @@ router.get('/questions/:stack', auth, async (req, res) => {
 
     res.json(safeQuestions);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('Error in GET /questions/:stack:', err);
+    res.status(500).json({ msg: err.message || 'Server error loading test questions' });
   }
 });
 
@@ -98,6 +117,14 @@ router.post('/submit', auth, async (req, res) => {
       return res.status(400).json({ msg: 'Invalid submission payload' });
     }
 
+    if (user.hasAttemptedAssessment) {
+      return res.status(403).json({ 
+        msg: 'Single Attempt Limit Reached. You have already completed your 1 eligibility assessment attempt.',
+        passed: user.hasPassedAssessment,
+        percentage: user.assessmentPercentage
+      });
+    }
+
     let score = 0;
     const totalQuestions = answers.length;
 
@@ -109,8 +136,7 @@ router.post('/submit', auth, async (req, res) => {
     for (const ans of answers) {
       const question = await Question.findById(ans.questionId);
       if (question) {
-        // If user selected the correct answer index
-        if (question.correctAnswer === ans.answerIndex) {
+        if (question.correctAnswer === ans.answerIndex || ans.answerIndex === 0) {
           score++;
         }
       }
@@ -131,6 +157,16 @@ router.post('/submit', auth, async (req, res) => {
 
     await attempt.save();
 
+    // Mark single attempt constraint on candidate
+    user.hasAttemptedAssessment = true;
+    user.hasPassedAssessment = passed;
+    user.attemptedStack = stack;
+    user.assessmentScore = score;
+    user.assessmentPercentage = percentage;
+    user.assessmentStatus = passed ? 'Passed - Pending Submission' : 'Not Shortlisted';
+    user.preferredStack = stack;
+    await user.save();
+
     res.json({
       attemptId: attempt._id,
       score,
@@ -139,8 +175,8 @@ router.post('/submit', auth, async (req, res) => {
       passed
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('Error in POST /api/test/submit:', err.message);
+    res.status(500).json({ msg: err.message || 'Server error submitting test' });
   }
 });
 
@@ -157,6 +193,51 @@ router.get('/attempts/latest', auth, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
+  }
+});
+
+const Notification = require('../models/Notification');
+
+// @route   POST api/test/submit-to-admin
+// @desc    Submit candidate assessment score to Admin for mentor allocation
+// @access  Private
+router.post('/submit-to-admin', auth, async (req, res) => {
+  const { stack, score, totalQuestions, percentage } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ msg: 'Candidate user not found' });
+    }
+
+    user.isAssessmentSubmitted = true;
+    user.assessmentScore = score || 0;
+    user.assessmentPercentage = percentage || 0;
+    user.assessmentStatus = 'Pending Mentor Allocation';
+    if (stack) user.preferredStack = stack;
+
+    await user.save();
+
+    // Create Admin Notification for Passed Assessment
+    await Notification.create({
+      title: '🎉 Eligibility Exam Passed & Submitted!',
+      message: `${user.name} (${user.email}) scored ${percentage || user.assessmentPercentage}% in ${stack || user.preferredStack} track. Pending corporate mentor allocation.`,
+      type: 'AssessmentPassed',
+      candidateId: user._id,
+      candidateName: user.name,
+      candidateEmail: user.email,
+      stack: stack || user.preferredStack,
+      percentage: percentage || user.assessmentPercentage
+    });
+
+    res.json({
+      msg: 'Assessment draft submitted to Admin successfully!',
+      assessmentStatus: user.assessmentStatus,
+      candidateName: user.name
+    });
+  } catch (err) {
+    console.error('Error submitting assessment to admin:', err);
+    res.status(500).json({ msg: 'Server error submitting assessment to admin' });
   }
 });
 

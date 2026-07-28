@@ -2,8 +2,8 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { 
   User, BookOpen, MapPin, ShieldAlert, ArrowRight, 
-  Save, GraduationCap, CheckCircle2, Info, Mail, Phone, Calendar,
-  Globe, Landmark, School, Award, Check
+  Save, GraduationCap, CheckCircle2, Info, Mail, Phone, Calendar, Clock,
+  Globe, Landmark, School, Award, Check, UploadCloud, FileText
 } from 'lucide-react';
 import tneaColleges from '../data/tneaColleges.json';
 import Galaxy from '../components/Galaxy';
@@ -224,6 +224,19 @@ const ProfileDetails = () => {
   const [localError, setLocalError] = useState('');
   const [localSuccess, setLocalSuccess] = useState('');
   const [completeness, setCompleteness] = useState(0);
+  const [fileName, setFileName] = useState('');
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, resumeUrl: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -275,6 +288,12 @@ const ProfileDetails = () => {
         isCityInList = CITIES_BY_STATE[dbState].includes(dbCity);
       }
 
+      let dbYear = user.currentYear || '';
+      if (dbYear.includes('4th') || dbYear.includes('Final')) dbYear = '4th Year';
+      else if (dbYear.includes('3rd')) dbYear = '3rd Year';
+      else if (dbYear.includes('2nd')) dbYear = '2nd Year';
+      else if (dbYear.includes('1st')) dbYear = '1st Year';
+
       setFormData(prev => ({
         ...prev,
         name: user.name || '',
@@ -285,9 +304,10 @@ const ProfileDetails = () => {
         college: dbCollege ? (isCollegeInList ? dbCollege : 'Other') : '',
         degree: dbDegree ? (isDegreeInList ? dbDegree : 'Other') : '',
         branch: dbBranch ? (isBranchInList ? dbBranch : 'Other') : '',
-        currentYear: user.currentYear || '',
+        currentYear: dbYear,
         graduationYear: user.graduationYear || '',
         cgpa: user.cgpa || '',
+        resumeUrl: user.resumeUrl || '',
         city: dbCity ? (isCityInList ? dbCity : 'Other') : '',
         state: dbState ? (isStateInList ? dbState : 'Other') : '',
         country: dbCountry ? (isCountryInList ? dbCountry : 'Other') : 'India',
@@ -336,7 +356,7 @@ const ProfileDetails = () => {
 
   const getCurrentYearOptions = (deg) => {
     if (!deg) {
-      return ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Other'];
+      return ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Final Year (4th Year)', 'Other'];
     }
     
     // Master degrees (M.E., M.Tech, M.C.A., M.Sc, etc.)
@@ -350,7 +370,7 @@ const ProfileDetails = () => {
     }
     
     // Default/4-year Bachelor degrees (B.E., B.Tech)
-    return ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Other'];
+    return ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Final Year (4th Year)', 'Other'];
   };
 
   const getBranchOptions = (deg) => {
@@ -454,14 +474,16 @@ const ProfileDetails = () => {
       currentYear: formData.currentYear,
       graduationYear: formData.graduationYear,
       cgpa: formData.cgpa,
+      resumeUrl: formData.resumeUrl,
       dob: formData.dob,
       gender: formData.gender,
       mobile: formData.mobile,
       city: formData.city === 'Other' ? customCity : formData.city,
       state: formData.state === 'Other' ? customState : formData.state,
       country: formData.country === 'Other' ? customCountry : formData.country,
+      internshipDuration: formData.internshipDuration || '3 Months',
       isDeclarationConfirmed: isFinalSubmit ? true : (formData.isInfoAccurate && formData.isTermsAccepted),
-      isProfileCompleted: isFinalSubmit
+      isProfileCompleted: isFinalSubmit ? true : Boolean(user?.isProfileCompleted)
     };
   };
 
@@ -532,36 +554,11 @@ const ProfileDetails = () => {
 
   return (
     <>
-      {/* Animated Galaxy Background */}
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        width: '100vw', 
-        height: '100vh', 
-        zIndex: -1, 
-        pointerEvents: 'none' 
-      }}>
-        <Galaxy 
-          mouseInteraction={true}
-          mouseRepulsion={true}
-          density={1.0}
-          glowIntensity={0.3}
-          saturation={0.0}
-          hueShift={140}
-          twinkleIntensity={0.3}
-          rotationSpeed={0.1}
-          repulsionStrength={1.8}
-          autoCenterRepulsion={0}
-          starSpeed={0.5}
-          speed={1.6}
-          transparent={false}
-        />
-      </div>
+
       <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }} className="animate-fade">
       {/* Title */}
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '6px', fontWeight: '800', background: 'linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%)', webkitBackgroundClip: 'text', webkitTextFillColor: 'transparent' }}>
+        <h1 style={{ fontSize: '2.5rem', marginBottom: '6px', fontWeight: '800', background: 'linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Candidate Profile
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '600px', margin: '0 auto' }}>
@@ -618,7 +615,10 @@ const ProfileDetails = () => {
 
           <div className="responsive-grid grid-2">
             <div className="form-group">
-              <label htmlFor="name">Full Name *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label htmlFor="name" style={{ margin: 0 }}>Full Name *</label>
+                <span style={{ fontSize: '0.725rem', color: '#10b981', fontWeight: '600' }}>Pre-filled from Signup</span>
+              </div>
               <div style={{ position: 'relative' }}>
                 <User size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input
@@ -635,7 +635,10 @@ const ProfileDetails = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="email">Email Address *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label htmlFor="email" style={{ margin: 0 }}>Email Address *</label>
+                <span style={{ fontSize: '0.725rem', color: '#818cf8', fontWeight: '600' }}>Verified Account</span>
+              </div>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input
@@ -645,7 +648,7 @@ const ProfileDetails = () => {
                   className="form-control"
                   value={formData.email}
                   disabled
-                  style={{ paddingLeft: '40px', opacity: 0.6, cursor: 'not-allowed', background: 'rgba(0,0,0,0.4)' }}
+                  style={{ paddingLeft: '40px', opacity: 0.7, cursor: 'not-allowed', background: 'rgba(0,0,0,0.4)' }}
                 />
               </div>
             </div>
@@ -700,6 +703,26 @@ const ProfileDetails = () => {
                 />
               </div>
             </div>
+
+            <div className="form-group">
+              <label htmlFor="internshipDuration">Internship Duration / Period *</label>
+              <div style={{ position: 'relative' }}>
+                <Clock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <select
+                  id="internshipDuration"
+                  name="internshipDuration"
+                  className="form-control"
+                  value={formData.internshipDuration}
+                  onChange={handleChange}
+                  style={{ paddingLeft: '40px' }}
+                >
+                  <option value="3 Months">3 Months</option>
+                  <option value="6 Months">6 Months</option>
+                  <option value="6 Weeks">6 Weeks</option>
+                  <option value="1 Year">1 Year</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -711,15 +734,30 @@ const ProfileDetails = () => {
           </h3>
 
           <div className="responsive-grid grid-2">
-            <SearchableSelect
-              label="College Name *"
-              id="college"
-              value={formData.college}
-              onChange={(val) => setFormData(prev => ({ ...prev, college: val }))}
-              options={tneaColleges}
-              placeholder="Search TNEA code or name..."
-              icon={School}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <SearchableSelect
+                label="College Name *"
+                id="college"
+                value={formData.college}
+                onChange={(val) => setFormData(prev => ({ ...prev, college: val }))}
+                options={tneaColleges}
+                placeholder="Search or select your college name..."
+                icon={School}
+              />
+              {formData.college === 'Other' && (
+                <div style={{ marginTop: '8px' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter your full college name..."
+                    value={customCollege}
+                    onChange={(e) => {
+                      setCustomCollege(e.target.value);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
 
             <div className="form-group">
               <label htmlFor="degree">Degree *</label>
@@ -731,38 +769,19 @@ const ProfileDetails = () => {
                 onChange={handleChange}
               >
                 <option value="">Select Degree</option>
-                {DEGREES.map((d, i) => (
-                  <option key={i} value={d}>{d}</option>
-                ))}
+                <option value="B.Tech">B.Tech (Bachelor of Technology)</option>
+                <option value="B.E">B.E (Bachelor of Engineering)</option>
+                <option value="M.Tech">M.Tech (Master of Technology)</option>
+                <option value="M.E">M.E (Master of Engineering)</option>
+                <option value="B.Sc">B.Sc (Bachelor of Science)</option>
+                <option value="M.Sc">M.Sc (Master of Science)</option>
+                <option value="MCA">MCA (Master of Computer Applications)</option>
+                <option value="BCA">BCA (Bachelor of Computer Applications)</option>
               </select>
-              {formData.degree === 'Other' && (
-                <div style={{ marginTop: '10px' }} className="animate-fade">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter custom Degree"
-                    value={customDegree}
-                    onChange={(e) => setCustomDegree(e.target.value)}
-                  />
-                </div>
-              )}
             </div>
           </div>
 
-          {formData.college === 'Other' && (
-            <div style={{ marginTop: '-8px', marginBottom: '20px' }} className="animate-fade">
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Custom College Name *</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter custom College Name"
-                value={customCollege}
-                onChange={(e) => setCustomCollege(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className="responsive-grid grid-2" style={{ marginTop: '4px' }}>
+          <div className="responsive-grid grid-2" style={{ marginTop: '16px' }}>
             <div className="form-group">
               <label htmlFor="branch">Branch/Specialization *</label>
               <select
@@ -773,21 +792,15 @@ const ProfileDetails = () => {
                 onChange={handleChange}
               >
                 <option value="">Select Specialization</option>
-                {getBranchOptions(formData.degree === 'Other' ? customDegree : formData.degree).map((b, i) => (
-                  <option key={i} value={b}>{b}</option>
-                ))}
+                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
+                <option value="Electronics & Communication">Electronics & Communication</option>
+                <option value="Electrical & Electronics">Electrical & Electronics</option>
+                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                <option value="Civil Engineering">Civil Engineering</option>
+                <option value="Cyber Security">Cyber Security</option>
               </select>
-              {formData.branch === 'Other' && (
-                <div style={{ marginTop: '10px' }} className="animate-fade">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter custom Specialization"
-                    value={customBranch}
-                    onChange={(e) => setCustomBranch(e.target.value)}
-                  />
-                </div>
-              )}
             </div>
 
             <div className="form-group">
@@ -800,14 +813,15 @@ const ProfileDetails = () => {
                 onChange={handleChange}
               >
                 <option value="">Select Year</option>
-                {getCurrentYearOptions(formData.degree === 'Other' ? customDegree : formData.degree).map((yr, idx) => (
-                  <option key={idx} value={yr}>{yr}</option>
-                ))}
+                <option value="Final Year (4th Year)">Final Year (4th Year)</option>
+                <option value="Pre-Final Year (3rd Year)">Pre-Final Year (3rd Year)</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="1st Year">1st Year</option>
               </select>
             </div>
           </div>
 
-          <div className="responsive-grid grid-2" style={{ marginTop: '4px' }}>
+          <div className="responsive-grid grid-2" style={{ marginTop: '16px' }}>
             <div className="form-group">
               <label htmlFor="graduationYear">Graduation Year *</label>
               <div style={{ position: 'relative' }}>
@@ -840,6 +854,115 @@ const ProfileDetails = () => {
                   style={{ paddingLeft: '40px' }}
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="form-group" style={{ marginTop: '20px' }}>
+            <label htmlFor="resumeFile" style={{ fontWeight: '600', color: '#f8fafc', marginBottom: '8px', display: 'block' }}>
+              Upload & Attach Resume / CV Document (PDF, DOC, DOCX) *
+            </label>
+            
+            <div 
+              style={{
+                border: '2px dashed rgba(99, 102, 241, 0.4)',
+                borderRadius: '14px',
+                padding: '24px',
+                textAlign: 'center',
+                background: 'rgba(99, 102, 241, 0.04)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                position: 'relative'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.7)';
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.04)';
+              }}
+            >
+              <input 
+                type="file" 
+                id="resumeFile" 
+                accept=".pdf,.doc,.docx"
+                onChange={handleFileUpload}
+                style={{
+                  position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%', zIndex: 10
+                }}
+              />
+
+              {formData.resumeUrl ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+                  <div style={{
+                    width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <FileText size={24} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>{fileName || 'Resume Document Attached'}</span>
+                      <CheckCircle2 size={16} style={{ color: '#10b981' }} />
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#10b981', marginTop: '2px' }}>
+                      File attached successfully! Click or drag to replace document.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{
+                    width: '52px', height: '52px', borderRadius: '50%', background: 'rgba(129, 140, 248, 0.12)',
+                    border: '1px solid rgba(129, 140, 248, 0.3)', color: '#818cf8', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto'
+                  }}>
+                    <UploadCloud size={26} />
+                  </div>
+                  <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.95rem' }}>
+                    Click or drag & drop to attach your Resume file
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>
+                    Supported formats: PDF, DOC, DOCX (Max size: 10MB)
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Additional Academic & Placement Fields */}
+          <div className="responsive-grid grid-2" style={{ marginTop: '16px' }}>
+            <div className="form-group">
+              <label htmlFor="activeBacklogs">Active Backlogs / Arrears</label>
+              <select
+                id="activeBacklogs"
+                name="activeBacklogs"
+                className="form-control"
+                value={formData.activeBacklogs || '0'}
+                onChange={handleChange}
+              >
+                <option value="0">0 (No Active Backlogs)</option>
+                <option value="1">1 Active Backlog</option>
+                <option value="2+">2+ Active Backlogs</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="preferredLocation">Preferred Hexaware Work Location</label>
+              <select
+                id="preferredLocation"
+                name="preferredLocation"
+                className="form-control"
+                value={formData.preferredLocation || 'Chennai'}
+                onChange={handleChange}
+              >
+                <option value="Chennai">Chennai (Siruseri / SIPCOT Campus)</option>
+                <option value="Bengaluru">Bengaluru (Electronic City)</option>
+                <option value="Hyderabad">Hyderabad (Hitech City)</option>
+                <option value="Pune">Pune (Hinjawadi)</option>
+                <option value="Mumbai">Mumbai (Navi Mumbai)</option>
+                <option value="Noida">Noida (Delhi NCR)</option>
+              </select>
             </div>
           </div>
         </div>
@@ -964,7 +1087,114 @@ const ProfileDetails = () => {
           </div>
         </div>
 
+        {/* SECTION: CANDIDATE PORTFOLIO & WORK PREFERENCES (Only for completed profiles) */}
+        {user?.isProfileCompleted && (
+          <div className="glass-card" style={{ padding: '28px', marginBottom: '28px', borderLeft: '3px solid #818cf8' }}>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+              <Award size={20} style={{ color: '#818cf8' }} />
+              <span>Technical Portfolio & Work Preferences</span>
+            </h3>
 
+            <div className="responsive-grid grid-2">
+              <div className="form-group">
+                <label htmlFor="linkedinUrl">LinkedIn Profile URL</label>
+                <div style={{ position: 'relative' }}>
+                  <Globe size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="url"
+                    id="linkedinUrl"
+                    name="linkedinUrl"
+                    className="form-control"
+                    value={formData.linkedinUrl || ''}
+                    onChange={handleChange}
+                    placeholder="https://linkedin.com/in/your-profile"
+                    style={{ paddingLeft: '40px' }}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="githubUrl">GitHub / Portfolio URL</label>
+                <div style={{ position: 'relative' }}>
+                  <Globe size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="url"
+                    id="githubUrl"
+                    name="githubUrl"
+                    className="form-control"
+                    value={formData.githubUrl || ''}
+                    onChange={handleChange}
+                    placeholder="https://github.com/your-username"
+                    style={{ paddingLeft: '40px' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="responsive-grid grid-2" style={{ marginTop: '16px' }}>
+              <div className="form-group">
+                <label htmlFor="skills">Primary Technical Skills</label>
+                <input
+                  type="text"
+                  id="skills"
+                  name="skills"
+                  className="form-control"
+                  value={formData.skills || ''}
+                  onChange={handleChange}
+                  placeholder="e.g. Java, Python, React, SQL, Git"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="certifications">Certifications & Achievements (or Nil)</label>
+                <input
+                  type="text"
+                  id="certifications"
+                  name="certifications"
+                  className="form-control"
+                  value={formData.certifications || ''}
+                  onChange={handleChange}
+                  placeholder="e.g. AWS Certified, Oracle Java SE (or Nil)"
+                />
+              </div>
+            </div>
+
+            <div className="responsive-grid grid-2" style={{ marginTop: '16px' }}>
+              <div className="form-group">
+                <label htmlFor="preferredLocation">Preferred Hexaware Work Location</label>
+                <select
+                  id="preferredLocation"
+                  name="preferredLocation"
+                  className="form-control"
+                  value={formData.preferredLocation || 'Chennai'}
+                  onChange={handleChange}
+                >
+                  <option value="Chennai">Chennai (Siruseri / SIPCOT Campus)</option>
+                  <option value="Bengaluru">Bengaluru (Electronic City)</option>
+                  <option value="Hyderabad">Hyderabad (Hitech City)</option>
+                  <option value="Pune">Pune (Hinjawadi)</option>
+                  <option value="Mumbai">Mumbai (Navi Mumbai)</option>
+                  <option value="Noida">Noida (Delhi NCR)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="activeBacklogs">Active Backlogs / Arrears</label>
+                <select
+                  id="activeBacklogs"
+                  name="activeBacklogs"
+                  className="form-control"
+                  value={formData.activeBacklogs || '0'}
+                  onChange={handleChange}
+                >
+                  <option value="0">0 (No Active Backlogs)</option>
+                  <option value="1">1 Active Backlog</option>
+                  <option value="2+">2+ Active Backlogs</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SECTION 4: DECLARATIONS */}
         <div className="glass-card" style={{ padding: '28px', marginBottom: '32px', borderLeft: '3px solid var(--success)' }}>

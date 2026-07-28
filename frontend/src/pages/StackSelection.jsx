@@ -56,7 +56,7 @@ const StackSelection = ({ onSelectStack }) => {
   };
 
   return (
-    <div className="animate-fade" style={{ width: '100%' }}>
+    <div className="animate-fade" style={{ maxWidth: '1280px', width: '100%', margin: '0 auto', padding: '24px 32px', boxSizing: 'border-box' }}>
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
           Welcome, <span style={{ color: '#6366f1' }}>{user?.name}</span>!
@@ -100,8 +100,16 @@ const StackSelection = ({ onSelectStack }) => {
         </div>
       </div>
 
-      {/* Grid Layout */}
-      <div className="stacks-grid" style={{ minHeight: '300px' }}>
+      {/* 4 Cards Per Row Contained Grid Layout */}
+      <div 
+        className="stacks-grid" 
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+          gap: '16px', 
+          minHeight: '280px' 
+        }}
+      >
         {filteredStacks.map((stack) => {
           const isSelected = selectedStack === stack.name;
           return (
@@ -111,29 +119,44 @@ const StackSelection = ({ onSelectStack }) => {
               onClick={() => setSelectedStack(stack.name)}
               style={{
                 borderWidth: isSelected ? '2px' : '1px',
-                borderColor: isSelected ? 'var(--primary)' : 'var(--card-border)',
-                boxShadow: isSelected ? 'var(--shadow-glow)' : 'var(--shadow-md)',
+                borderColor: isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.08)',
+                background: isSelected ? 'rgba(99, 102, 241, 0.12)' : 'rgba(15, 17, 32, 0.65)',
+                boxShadow: isSelected ? '0 0 20px rgba(99, 102, 241, 0.3)' : '0 4px 14px rgba(0,0,0,0.4)',
                 transform: isSelected ? 'scale(1.02)' : 'none',
-                padding: '24px'
+                padding: '16px 18px',
+                borderRadius: '16px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
               }}
             >
-              <div
-                className="stack-icon"
-                style={{
-                  background: isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.03)',
-                  color: isSelected ? '#ffffff' : stack.color,
-                  width: '48px',
-                  height: '48px',
-                  marginBottom: '16px'
-                }}
-              >
-                {stack.icon}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <div
+                  className="stack-icon"
+                  style={{
+                    background: isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.04)',
+                    color: isSelected ? '#ffffff' : stack.color,
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justify: 'center'
+                  }}
+                >
+                  {React.cloneElement(stack.icon, { size: 18 })}
+                </div>
+                {isSelected && (
+                  <span style={{ fontSize: '0.7rem', background: '#10b981', color: '#fff', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>
+                    Selected
+                  </span>
+                )}
               </div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '6px' }}>{stack.name}</h3>
-              <p style={{ fontSize: '0.8rem', color: '#6366f1', marginBottom: '8px', fontWeight: '500' }}>
+
+              <h3 style={{ fontSize: '1.05rem', fontWeight: '700', marginBottom: '3px', color: '#ffffff' }}>{stack.name}</h3>
+              <p style={{ fontSize: '0.75rem', color: '#818cf8', marginBottom: '6px', fontWeight: '600' }}>
                 {stack.category}
               </p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+              <p style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: '1.35', margin: 0 }}>
                 {stack.desc}
               </p>
             </div>

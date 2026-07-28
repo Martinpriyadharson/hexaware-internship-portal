@@ -42,9 +42,9 @@ const generateQuestionsForStack = async (stack) => {
       }
     };
 
-    // Use gemini-3.5-flash as it is the active stable model in 2026
+    // Use gemini-2.0-flash model
     const model = genAI.getGenerativeModel({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: questionSchema
@@ -85,7 +85,7 @@ Strict Formatting Rules to Prevent Repetitive Phrasing:
 
   } catch (error) {
     console.error(`Error generating questions via Gemini for stack "${stack}":`, error.message);
-    throw error;
+    return [];
   }
 };
 

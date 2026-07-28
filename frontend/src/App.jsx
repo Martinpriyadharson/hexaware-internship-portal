@@ -8,36 +8,23 @@ import ResultScreen from './pages/ResultScreen';
 import { ShieldAlert, LogOut } from 'lucide-react';
 import HexawareLogo from './components/HexawareLogo';
 
+import MentorDashboard from './pages/MentorDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import CandidateDashboard from './pages/CandidateDashboard';
+
 function App() {
   const { user, token, loading, logout } = useContext(AuthContext);
   const [selectedStack, setSelectedStack] = useState(null);
   const [testResult, setTestResult] = useState(null);
-  const showVideoBg = !user || (user && user.isProfileCompleted && !selectedStack && !testResult);
+  const [hasClearedAssessment, setHasClearedAssessment] = useState(false);
+  const showVideoBg = !user || (user && !user.isProfileCompleted);
 
+  // Reset state when user changes
   useEffect(() => {
-    const fetchLatestAttempt = async () => {
-      if (!user || !user.isProfileCompleted || !token) return;
-      try {
-        const res = await fetch('http://localhost:5000/api/test/attempts/latest', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (res.ok) {
-          const attempt = await res.json();
-          if (attempt) {
-            setTestResult(attempt);
-            setSelectedStack(attempt.stack);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching latest attempt:', err);
-      }
-    };
-
-    fetchLatestAttempt();
-  }, [user, token]);
+    setSelectedStack(null);
+    setTestResult(null);
+    setHasClearedAssessment(false);
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -49,16 +36,29 @@ function App() {
     );
   }
 
+  // 1. Role Router: ADMIN DASHBOARD
+  if (user && user.role === 'Admin') {
+    return <AdminDashboard user={user} onLogout={logout} />;
+  }
+
+  // 2. Role Router: MENTOR DASHBOARD
+  if (user && user.role === 'Mentor') {
+    return <MentorDashboard user={user} onLogout={logout} />;
+  }
+
+  // 3. Candidate Experience & Dashboard
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }} className={!user ? 'auth-page' : ''}>
-      {/* Antigravity Floating Particles (Layered 3D Depth) */}
-      <div className="antigravity-bg">
-        {/* Layer 1: Background (Far, Small, Slow, Muted) */}
-        {Array.from({ length: 22 }).map((_, i) => {
-          const size = Math.random() * 1.2 + 1; // 1px to 2.2px
+      {/* Antigravity Floating Particles */}
+      {(!user || user.isProfileCompleted) && (
+        <div className="antigravity-bg">
+          <div className="ambient-glow-1" />
+          <div className="ambient-glow-2" />
+        {Array.from({ length: 30 }).map((_, i) => {
+          const size = Math.random() * 1.2 + 1.2;
           const left = Math.random() * 100;
-          const delay = Math.random() * 25;
-          const duration = Math.random() * 15 + 30; // 30s to 45s (very slow)
+          const delay = Math.random() * 5;
+          const duration = Math.random() * 4 + 5;
           const driftX = Math.random() * 60 - 30;
           return (
             <div
@@ -71,62 +71,14 @@ function App() {
                 animationDelay: `${delay}s`,
                 animationDuration: `${duration}s`,
                 filter: 'blur(0.5px)',
-                '--particle-opacity': 0.25,
+                '--particle-opacity': 0.35,
                 '--drift-x': `${driftX}px`
               }}
             />
           );
         })}
-
-        {/* Layer 2: Midground (Medium, Normal speed) */}
-        {Array.from({ length: 14 }).map((_, i) => {
-          const size = Math.random() * 1.5 + 2.2; // 2.2px to 3.7px
-          const left = Math.random() * 100;
-          const delay = Math.random() * 20;
-          const duration = Math.random() * 10 + 20; // 20s to 30s
-          const driftX = Math.random() * 80 - 40;
-          return (
-            <div
-              key={`mid-${i}`}
-              className="antigravity-particle"
-              style={{
-                width: `${size}px`,
-                height: `${size}px`,
-                left: `${left}%`,
-                animationDelay: `${delay}s`,
-                animationDuration: `${duration}s`,
-                '--particle-opacity': 0.45,
-                '--drift-x': `${driftX}px`
-              }}
-            />
-          );
-        })}
-
-        {/* Layer 3: Foreground (Near, Large, Fast, Bright) */}
-        {Array.from({ length: 6 }).map((_, i) => {
-          const size = Math.random() * 1.5 + 3.7; // 3.7px to 5.2px
-          const left = Math.random() * 100;
-          const delay = Math.random() * 15;
-          const duration = Math.random() * 8 + 12; // 12s to 20s (faster)
-          const driftX = Math.random() * 100 - 50;
-          return (
-            <div
-              key={`fg-${i}`}
-              className="antigravity-particle"
-              style={{
-                width: `${size}px`,
-                height: `${size}px`,
-                left: `${left}%`,
-                animationDelay: `${delay}s`,
-                animationDuration: `${duration}s`,
-                boxShadow: '0 0 10px rgba(99, 102, 241, 0.4)',
-                '--particle-opacity': 0.65,
-                '--drift-x': `${driftX}px`
-              }}
-            />
-          );
-        })}
-      </div>
+        </div>
+      )}
 
       {/* Background Container with Milky Way Galaxy Video */}
       {showVideoBg && (
@@ -145,66 +97,118 @@ function App() {
         </div>
       )}
 
-      {/* Navigation */}
-      <header className="navbar">
-        <div className="nav-content">
-          <div className="logo" style={{ display: 'flex', alignItems: 'center', height: '36px' }}>
-            <HexawareLogo style={{ height: '28px', width: 'auto' }} />
-            <span style={{ marginLeft: '10px', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase', borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: '10px' }}>
-              Internships
-            </span>
-          </div>
-          {user && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ textAlign: 'right', fontSize: '0.85rem', display: 'none', md: 'block' }}>
-                <div style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{user.name}</div>
-                <div style={{ color: 'var(--text-muted)' }}>Candidate ID: ...{user.id?.substring(user.id.length - 6)}</div>
-              </div>
-              <button 
-                onClick={logout} 
-                className="secondary-btn" 
-                style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <LogOut size={14} />
-                <span>Sign Out</span>
-              </button>
+      {/* Navigation (Only for Unauthenticated / Assessment Flow) */}
+      {(!user || !user.assignedMentorId) && (
+        <header className="navbar">
+          <div className="nav-content">
+            <div className="logo" style={{ display: 'flex', alignItems: 'center', height: '36px' }}>
+              <HexawareLogo style={{ height: '28px', width: 'auto' }} />
+              <span style={{ marginLeft: '10px', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase', borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: '10px' }}>
+                Internships
+              </span>
             </div>
-          )}
-        </div>
-      </header>
+            {user && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ textAlign: 'right', fontSize: '0.85rem' }}>
+                  <div style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{user.name}</div>
+                  <div style={{ color: '#818cf8', fontSize: '0.78rem' }}>{user.email}</div>
+                </div>
+                <button 
+                  onClick={logout} 
+                  className="secondary-btn" 
+                  style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+      )}
 
       {/* Main Content Area */}
-      <main className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-        {!user ? (
-          <Auth />
-        ) : !user.isProfileCompleted ? (
-          <ProfileDetails />
-        ) : testResult ? (
-          <ResultScreen 
-            result={testResult} 
-            stack={selectedStack} 
-            onReset={() => {
-              setSelectedStack(null);
-              setTestResult(null);
-            }} 
-          />
-        ) : selectedStack ? (
-          <TestScreen 
-            stack={selectedStack} 
-            onTestFinished={(result) => setTestResult(result)} 
-          />
-        ) : (
-          <StackSelection 
-            onSelectStack={(stack) => setSelectedStack(stack)} 
-          />
-        )}
+      <main style={{ width: '100%', flexGrow: 1 }}>
+        {(() => {
+          if (!user) return <Auth />;
+          if (!user.isProfileCompleted) return <ProfileDetails />;
+
+          const hasAttempted = Boolean(user.hasAttemptedAssessment || user.isAssessmentSubmitted || (user.assessmentScore && user.assessmentScore > 0));
+          const hasPassed = Boolean(user.hasPassedAssessment || (user.assessmentPercentage && user.assessmentPercentage >= 75) || user.assessmentStatus === 'Mentor Allocated');
+          const isApproved = Boolean(user.assignedMentorId || user.assessmentStatus === 'Mentor Allocated');
+
+          if (hasAttempted && !hasPassed) {
+            // FAILED ATTEMPT -> NOT SHORTLISTED SCREEN
+            return (
+              <ResultScreen 
+                result={{
+                  score: user.assessmentScore || 0,
+                  percentage: user.assessmentPercentage || 0,
+                  totalQuestions: 30,
+                  passed: false
+                }} 
+                stack={user.attemptedStack || user.preferredStack || 'Specialization Track'} 
+                onReset={() => {}} 
+              />
+            );
+          }
+
+          if (hasAttempted && hasPassed && !isApproved) {
+            // PASSED ATTEMPT -> ADMIN SUBMISSION & PENDING MENTOR ALLOCATION SCREEN
+            return (
+              <ResultScreen 
+                result={{
+                  score: user.assessmentScore || 0,
+                  percentage: user.assessmentPercentage || 0,
+                  totalQuestions: 30,
+                  passed: true
+                }} 
+                stack={user.attemptedStack || user.preferredStack || 'Specialization Track'} 
+                onReset={() => {}} 
+              />
+            );
+          }
+
+          if (hasAttempted && hasPassed && isApproved) {
+            // PASSED & MENTOR ALLOCATED -> CANDIDATE DASHBOARD
+            return <CandidateDashboard onSelectStack={(stack) => setSelectedStack(stack)} />;
+          }
+
+          if (selectedStack && !testResult) {
+            // ACTIVE TEST SCREEN FOR FRESH CANDIDATE
+            return (
+              <TestScreen 
+                stack={selectedStack} 
+                onTestFinished={(result) => setTestResult(result)} 
+              />
+            );
+          }
+
+          if (testResult) {
+            // TEST FINISHED IN ACTIVE SESSION
+            return (
+              <ResultScreen 
+                result={testResult} 
+                stack={selectedStack} 
+                onReset={() => {
+                  setSelectedStack(null);
+                  setTestResult(null);
+                }} 
+              />
+            );
+          }
+
+          // FRESH CANDIDATE -> SELECT 1 TRACK FROM 22
+          return <StackSelection onSelectStack={(stack) => setSelectedStack(stack)} />;
+        })()}
       </main>
 
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', padding: '12px 24px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem', background: 'transparent', zIndex: 10 }}>
-        <div>&copy; 2026 Hexaware Technologies. All rights reserved.</div>
-        <div style={{ marginTop: '6px', fontSize: '0.725rem', color: 'rgba(255, 255, 255, 0.35)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Secure Intern Examination Portal &bull; Sprint 1</div>
-      </footer>
+      {/* Footer (Only for Auth / Onboarding / Test Flow) */}
+      {(!user || !user.assignedMentorId) && (
+        <footer style={{ borderTop: '1px solid rgba(255, 255, 255, 0.04)', padding: '14px 24px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem', background: 'transparent', zIndex: 10 }}>
+          <div>&copy; 2026 Hexaware Technologies. All rights reserved.</div>
+        </footer>
+      )}
     </div>
   );
 }
