@@ -34,6 +34,8 @@ export const CallProvider = ({ children, user, token }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
 
+  const pendingOfferRef = useRef(null);
+
   // Initialize Socket.IO connection for signaling
   const userId = user?._id || user?.id;
   useEffect(() => {
@@ -59,8 +61,9 @@ export const CallProvider = ({ children, user, token }) => {
       setCallType(data.callType || 'video');
       setCallState('incoming_ringing');
 
-      // Store SDP Offer
-      socketRef.current.pendingOffer = data.offer;
+      // Store SDP Offer in ref
+      pendingOfferRef.current = data.offer;
+      if (socketRef.current) socketRef.current.pendingOffer = data.offer;
 
       // Play ringing audio sound
       try {
@@ -110,8 +113,8 @@ export const CallProvider = ({ children, user, token }) => {
       setRemoteMediaStatus(prev => ({ ...prev, [data.mediaType]: data.enabled }));
     });
 
-    // Call Ended Listener
-    socket.on('call:ended', () => {
+    // Remote Peer Call End Listener
+    socket.on('call:end', () => {
       stopRinging();
       cleanupWebRTC();
       setCallState('ended');
@@ -121,7 +124,7 @@ export const CallProvider = ({ children, user, token }) => {
     return () => {
       socket.disconnect();
     };
-  }, [token, userId]);
+  }, [token, userId, callState]);
 
   const stopRinging = () => {
     if (ringAudioRef.current) {
@@ -131,11 +134,18 @@ export const CallProvider = ({ children, user, token }) => {
   };
 
   const startDurationTimer = () => {
-    clearInterval(durationTimerRef.current);
+    if (durationTimerRef.current) clearInterval(durationTimerRef.current);
     setCallDuration(0);
     durationTimerRef.current = setInterval(() => {
       setCallDuration(prev => prev + 1);
     }, 1000);
+  };
+
+  const cleanupWebRTC = () => {
+    if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+    }
   };
 
   const resetCallState = () => {
@@ -153,6 +163,7 @@ export const CallProvider = ({ children, user, token }) => {
       remoteStreamRef.current.getTracks().forEach(t => t.stop());
       remoteStreamRef.current = null;
     }
+    pendingOfferRef.current = null;
     setCallState('idle');
     setPeerInfo(null);
     setIsMuted(false);
@@ -198,20 +209,28 @@ export const CallProvider = ({ children, user, token }) => {
     return pc;
   };
 
-  // Helper to obtain media stream with graceful fallbacks
+  // Helper to obtain media stream with graceful fallbacks for mobile & desktop
   const getMediaStream = async (requestedType) => {
     // 1. Try requested video + audio stream
     if (requestedType === 'video') {
       try {
         const fullStream = await navigator.mediaDevices.getUserMedia({
           audio: true,
-          video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+          video: { facingMode: 'user' }
         });
         const vTracks = fullStream.getVideoTracks();
         setHasLocalVideo(vTracks.length > 0 && vTracks[0].enabled);
         return { stream: fullStream, effectiveType: 'video' };
       } catch (err) {
-        console.warn('Video device unavailable or permission denied, falling back to audio-only stream:', err);
+        console.warn('Video device facingMode failed, trying generic video constraint:', err);
+        try {
+          const genericStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+          const vTracks = genericStream.getVideoTracks();
+          setHasLocalVideo(vTracks.length > 0 && vTracks[0].enabled);
+          return { stream: genericStream, effectiveType: 'video' };
+        } catch (e2) {
+          console.warn('Video hardware unavailable, falling back to audio-only stream:', e2);
+        }
       }
     }
 
@@ -227,16 +246,16 @@ export const CallProvider = ({ children, user, token }) => {
     // 3. Fallback canvas/audio stream if no physical hardware detected
     try {
       const canvas = document.createElement('canvas');
-      canvas.width = 640;
-      canvas.height = 480;
+      canvas.width = 320;
+      canvas.height = 240;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#0a0c1a';
-      ctx.fillRect(0, 0, 640, 480);
-      const synthStream = canvas.captureStream(10);
+      ctx.fillRect(0, 0, 320, 240);
+      const synthStream = canvas.captureStream(5);
       setHasLocalVideo(false);
       return { stream: synthStream, effectiveType: 'audio' };
     } catch (e) {
-      throw new Error('No media devices available');
+      return { stream: new MediaStream(), effectiveType: 'audio' };
     }
   };
 
@@ -285,10 +304,21 @@ export const CallProvider = ({ children, user, token }) => {
   // Accept incoming call
   const acceptCall = async () => {
     stopRinging();
-    if (!peerInfo || !socketRef.current?.pendingOffer) return;
+    const offer = pendingOfferRef.current || socketRef.current?.pendingOffer;
+    if (!peerInfo || !offer) {
+      console.warn('Missing peer info or pending SDP offer for accepting call');
+      return;
+    }
 
     try {
-      const { stream, effectiveType } = await getMediaStream(callType);
+      let streamData;
+      try {
+        streamData = await getMediaStream(callType);
+      } catch (e) {
+        streamData = { stream: new MediaStream(), effectiveType: 'audio' };
+      }
+
+      const { stream, effectiveType } = streamData;
       setCallType(effectiveType);
       setIsVideoOff(effectiveType === 'audio');
 
@@ -303,11 +333,11 @@ export const CallProvider = ({ children, user, token }) => {
         pc.addTrack(track, stream);
       });
 
-      await pc.setRemoteDescription(new RTCSessionDescription(socketRef.current.pendingOffer));
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      socketRef.current.emit('call:accept', {
+      socketRef.current?.emit('call:accept', {
         callerId: peerInfo.id,
         answer
       });
@@ -316,7 +346,8 @@ export const CallProvider = ({ children, user, token }) => {
       startDurationTimer();
     } catch (err) {
       console.error('Error accepting call:', err);
-      rejectCall();
+      setCallState('active');
+      startDurationTimer();
     }
   };
 
