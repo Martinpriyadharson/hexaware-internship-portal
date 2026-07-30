@@ -16,13 +16,14 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'https://hexaware-internship-portal.vercel.app',
   process.env.CLIENT_URL
 ].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) or matching allowed origins
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) or matching allowed origins / vercel.app domains
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || (typeof origin === 'string' && origin.endsWith('.vercel.app'))) {
       return callback(null, true);
     }
     return callback(new Error('CORS policy violation: Access denied for origin ' + origin), false);
