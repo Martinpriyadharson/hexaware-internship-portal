@@ -246,7 +246,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                     <Clock size={18} style={{ color: '#f59e0b' }} />
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ffffff', marginTop: '6px' }}>
-                    {overviewData.candidates.filter(c => !c.assignedMentorId).length}
+                    {overviewData.candidates.filter(c => !c.assignedMentorId && (c.isAssessmentSubmitted || c.assessmentStatus === 'Pending Mentor Allocation' || c.hasPassedAssessment || (c.assessmentPercentage !== undefined && c.assessmentPercentage > 0))).length}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px' }}>Awaiting mentor assignment</div>
                 </div>
@@ -272,9 +272,9 @@ const AdminDashboard = ({ user, onLogout }) => {
                     </button>
                   </div>
                   <div style={{ overflowX: 'auto' }}>
-                    {overviewData.candidates.filter(c => !c.assignedMentorId).length === 0 ? (
+                    {overviewData.candidates.filter(c => !c.assignedMentorId && (c.isAssessmentSubmitted || c.assessmentStatus === 'Pending Mentor Allocation' || c.hasPassedAssessment || (c.assessmentPercentage !== undefined && c.assessmentPercentage > 0))).length === 0 ? (
                       <div style={{ padding: '30px 0', textAlign: 'center', color: '#94a3b8', fontSize: '0.875rem' }}>
-                        All candidates have been allocated to mentors! 🎉
+                        All eligible candidates have been allocated to mentors! 🎉
                       </div>
                     ) : (
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem', textAlign: 'left' }}>
@@ -286,12 +286,12 @@ const AdminDashboard = ({ user, onLogout }) => {
                           </tr>
                         </thead>
                         <tbody>
-                          {overviewData.candidates.filter(c => !c.assignedMentorId).slice(0, 5).map((cand, idx) => (
+                          {overviewData.candidates.filter(c => !c.assignedMentorId && (c.isAssessmentSubmitted || c.assessmentStatus === 'Pending Mentor Allocation' || c.hasPassedAssessment || (c.assessmentPercentage !== undefined && c.assessmentPercentage > 0))).slice(0, 5).map((cand, idx) => (
                             <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                               <td style={{ padding: '10px 8px', color: '#f8fafc', fontWeight: '600' }}>{cand.name}</td>
                               <td style={{ padding: '10px 8px', color: '#a78bfa' }}>{cand.preferredStack || 'Python Full Stack'}</td>
                               <td style={{ padding: '10px 8px', color: '#10b981', fontWeight: '700' }}>
-                                {cand.assessmentPercentage || 100}%
+                                {cand.assessmentPercentage !== undefined ? `${cand.assessmentPercentage}%` : 'Pending Test'}
                               </td>
                             </tr>
                           ))}
