@@ -327,43 +327,72 @@ const AdminDashboard = ({ user, onLogout }) => {
                         <th style={{ padding: '12px' }}>Email & College</th>
                         <th style={{ padding: '12px' }}>Track</th>
                         <th style={{ padding: '12px' }}>Assigned Mentor</th>
+                        <th style={{ padding: '12px' }}>Prerequisite Status</th>
                         <th style={{ padding: '12px' }}>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {overviewData.candidates.map((cand, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff' }}>{cand.name}</td>
-                          <td style={{ padding: '14px 12px' }}>
-                            <div style={{ color: '#f8fafc' }}>{cand.email}</div>
-                            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || 'Anna University'}</div>
-                          </td>
-                          <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
-                            <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
-                              {cand.preferredStack || 'Python Full Stack'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '14px 12px' }}>
-                            {cand.assignedMentorId ? (
-                              <div style={{ color: '#10b981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <ShieldCheck size={16} />
-                                <span>{cand.assignedMentorId.name}</span>
-                              </div>
-                            ) : (
-                              <span style={{ color: '#f59e0b', fontSize: '0.8rem', fontWeight: '600' }}>Unallocated</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '14px 12px' }}>
-                            <button 
-                              onClick={() => { setSelectedCandidate(cand); setShowAllocateModal(true); }}
-                              className="secondary-btn" 
-                              style={{ padding: '6px 14px', fontSize: '0.8rem', color: '#818cf8' }}
-                            >
-                              Allocate Mentor
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {overviewData.candidates.map((cand, idx) => {
+                        const isEligible = cand.isProfileCompleted && (cand.isAssessmentSubmitted || cand.hasPassedAssessment || cand.assessmentStatus === 'Pending Mentor Allocation' || cand.assessmentStatus === 'Mentor Allocated');
+                        return (
+                          <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff' }}>{cand.name}</td>
+                            <td style={{ padding: '14px 12px' }}>
+                              <div style={{ color: '#f8fafc' }}>{cand.email}</div>
+                              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Details')}</div>
+                            </td>
+                            <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
+                              <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
+                                {cand.preferredStack || 'Python Full Stack'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px 12px' }}>
+                              {cand.assignedMentorId ? (
+                                <div style={{ color: '#10b981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <ShieldCheck size={16} />
+                                  <span>{cand.assignedMentorId.name}</span>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#f59e0b', fontSize: '0.8rem', fontWeight: '600' }}>Unallocated</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '14px 12px' }}>
+                              {!cand.isProfileCompleted ? (
+                                <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
+                                  Profile Incomplete
+                                </span>
+                              ) : !cand.isAssessmentSubmitted && !cand.hasPassedAssessment ? (
+                                <span style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
+                                  Test Pending
+                                </span>
+                              ) : (
+                                <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
+                                  Ready for Allocation
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '14px 12px' }}>
+                              {isEligible ? (
+                                <button 
+                                  onClick={() => { setSelectedCandidate(cand); setShowAllocateModal(true); }}
+                                  className="glow-btn" 
+                                  style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}
+                                >
+                                  Allocate Mentor
+                                </button>
+                              ) : (
+                                <button 
+                                  disabled
+                                  style={{ padding: '6px 14px', fontSize: '0.78rem', background: 'rgba(255,255,255,0.05)', color: '#64748b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'not-allowed', fontWeight: '600' }}
+                                  title="Candidate must complete collegiate profile and test before allocation"
+                                >
+                                  Prerequisites Pending
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -388,6 +417,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                         <th style={{ padding: '12px' }}>Email & College</th>
                         <th style={{ padding: '12px' }}>Degree & Branch</th>
                         <th style={{ padding: '12px' }}>Preferred Track</th>
+                        <th style={{ padding: '12px' }}>Onboarding Status</th>
                         <th style={{ padding: '12px' }}>Assigned Mentor</th>
                         <th style={{ padding: '12px' }}>Resume / Document</th>
                       </tr>
@@ -398,16 +428,39 @@ const AdminDashboard = ({ user, onLogout }) => {
                           <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff' }}>{cand.name}</td>
                           <td style={{ padding: '14px 12px' }}>
                             <div style={{ color: '#f8fafc' }}>{cand.email}</div>
-                            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || 'Anna University'}</div>
+                            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Setup')}</div>
                           </td>
                           <td style={{ padding: '14px 12px' }}>
-                            <div style={{ color: '#f8fafc' }}>{cand.degree || 'B.Tech'}</div>
+                            <div style={{ color: '#f8fafc' }}>{cand.degree || (cand.isProfileCompleted ? 'B.Tech / B.E' : 'Not Set')}</div>
                             <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.branch || 'Engineering'}</div>
                           </td>
                           <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
                             <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
                               {cand.preferredStack || 'Python Full Stack'}
                             </span>
+                          </td>
+                          <td style={{ padding: '14px 12px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              {cand.isProfileCompleted ? (
+                                <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <CheckCircle2 size={12} /> Profile Completed
+                                </span>
+                              ) : (
+                                <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <Clock size={12} /> Profile Incomplete
+                                </span>
+                              )}
+                              
+                              {cand.isAssessmentSubmitted || cand.hasPassedAssessment ? (
+                                <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <CheckCircle2 size={12} /> Test Passed ({cand.assessmentPercentage || 100}%)
+                                </span>
+                              ) : (
+                                <span style={{ color: '#38bdf8', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <Clock size={12} /> Test Pending
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td style={{ padding: '14px 12px' }}>
                             {cand.assignedMentorId ? (
