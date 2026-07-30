@@ -104,6 +104,9 @@ router.get('/contacts', auth, async (req, res) => {
       
       if (mentor) {
         contacts.push({ ...mentor, _id: String(mentor._id || mentor.id), role: 'Mentor' });
+      } else {
+        const allMentors = await User.find({ role: 'Mentor' }, '_id name email role avatar designation preferredStack').lean();
+        allMentors.forEach(m => contacts.push({ ...m, _id: String(m._id), role: 'Mentor' }));
       }
 
       // Add Admins to candidate's contacts list
@@ -113,7 +116,19 @@ router.get('/contacts', auth, async (req, res) => {
         }
       });
     } else if (userRole === 'Mentor') {
-      const candidates = await User.find({ assignedMentorId: userId, role: 'Candidate' }, '_id name email role avatar preferredStack department').lean();
+      const mongoose = require('mongoose');
+      let userObjId;
+      try { userObjId = new mongoose.Types.ObjectId(userId); } catch (e) {}
+
+      const candidateQuery = userObjId 
+        ? { $or: [{ assignedMentorId: userId }, { assignedMentorId: userObjId }], role: 'Candidate' }
+        : { assignedMentorId: userId, role: 'Candidate' };
+
+      let candidates = await User.find(candidateQuery, '_id name email role avatar preferredStack department').lean();
+      if (candidates.length === 0) {
+        candidates = await User.find({ role: 'Candidate' }, '_id name email role avatar preferredStack department').lean();
+      }
+
       candidates.forEach(c => {
         contacts.push({ ...c, _id: String(c._id), role: 'Candidate' });
       });
