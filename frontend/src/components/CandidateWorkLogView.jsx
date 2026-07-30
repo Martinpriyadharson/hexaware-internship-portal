@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { BASE_URL } from '../config/api';
 import { 
   Calendar, Save, FileText, GitBranch, ExternalLink, 
   CheckCircle2, AlertCircle, Info, History, Layers, ClipboardList
 } from 'lucide-react';
 
-const BACKEND = 'http://localhost:5000';
+const BACKEND = BASE_URL;
 
 function getTodayString() {
   const d = new Date();

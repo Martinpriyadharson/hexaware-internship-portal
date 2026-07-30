@@ -191,7 +191,7 @@ const CandidateDashboard = ({ onSelectStack }) => {
   const fetchCandidateAttempt = async () => {
     setLoadingAttempt(true);
     try {
-      const res = await fetch('http://localhost:5000/api/test/attempts/latest', {
+      const res = await fetch(`${API_URL}/test/attempts/latest`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

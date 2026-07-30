@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 import { 
   X, Send, User, Search, MessageSquare, Clock, CheckCheck, 
   GraduationCap, BookOpen, ShieldCheck, Sparkles, Paperclip, 
@@ -56,7 +57,7 @@ const MentorChatHub = ({ isOpen, onClose, initialCandidateId, candidates = [] })
 
   const fetchMessages = async (candidateId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${candidateId}`, {
+      const res = await fetch(`${API_URL}/messages/${candidateId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -99,7 +100,7 @@ const MentorChatHub = ({ isOpen, onClose, initialCandidateId, candidates = [] })
     setShowAttachMenu(false);
 
     try {
-      const res = await fetch('http://localhost:5000/api/messages/send', {
+      const res = await fetch(`${API_URL}/messages/send`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -126,7 +127,7 @@ const MentorChatHub = ({ isOpen, onClose, initialCandidateId, candidates = [] })
   const handleEditSubmit = async (msgId) => {
     if (!editingText.trim()) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/edit`, {
+      const res = await fetch(`${API_URL}/messages/${msgId}/edit`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -152,7 +153,7 @@ const MentorChatHub = ({ isOpen, onClose, initialCandidateId, candidates = [] })
     setDeleteModalMsgId(null);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}`, {
+      const res = await fetch(`${API_URL}/messages/${msgId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -168,7 +169,7 @@ const MentorChatHub = ({ isOpen, onClose, initialCandidateId, candidates = [] })
 
   const handleReactMessage = async (msgId, emoji) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/react`, {
+      const res = await fetch(`${API_URL}/messages/${msgId}/react`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

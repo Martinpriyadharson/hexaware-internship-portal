@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 import { 
   Send, Clock, Paperclip, Trash2, Edit2, Smile, 
   FileText, Download, Check, Ban, ShieldCheck, Mail, MessageSquare, Image, File, User
@@ -45,7 +46,7 @@ const CandidateChatView = () => {
   const fetchMessages = async () => {
     try {
       const recipientId = mentor._id || mentor.id;
-      const res = await fetch(`http://localhost:5000/api/messages/${recipientId}`, {
+      const res = await fetch(`${API_URL}/messages/${recipientId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -88,7 +89,7 @@ const CandidateChatView = () => {
     setShowAttachMenu(false);
 
     try {
-      const res = await fetch('http://localhost:5000/api/messages/send', {
+      const res = await fetch(`${API_URL}/messages/send`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -115,7 +116,7 @@ const CandidateChatView = () => {
   const handleEditSubmit = async (msgId) => {
     if (!editingText.trim()) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/edit`, {
+      const res = await fetch(`${API_URL}/messages/${msgId}/edit`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -141,7 +142,7 @@ const CandidateChatView = () => {
     setDeleteModalMsgId(null);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}`, {
+      const res = await fetch(`${API_URL}/messages/${msgId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -157,7 +158,7 @@ const CandidateChatView = () => {
 
   const handleReactMessage = async (msgId, emoji) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/react`, {
+      const res = await fetch(`${API_URL}/messages/${msgId}/react`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

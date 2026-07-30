@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../config/api';
 import { User, Mail, Briefcase, Award, Clock, Users, Edit3, CheckCircle2, AlertCircle, X, ShieldCheck } from 'lucide-react';
 
 const MentorProfileView = ({ user }) => {
@@ -23,7 +24,7 @@ const MentorProfileView = ({ user }) => {
   const fetchProfile = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/profile', {
+      const res = await fetch(`${API_URL}/mentor/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -52,7 +53,7 @@ const MentorProfileView = ({ user }) => {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/profile', {
+      const res = await fetch(`${API_URL}/mentor/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

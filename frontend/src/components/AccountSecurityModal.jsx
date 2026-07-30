@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../config/api';
 import { X, Lock, CheckCircle2, AlertCircle, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 const AccountSecurityModal = ({ isOpen, onClose }) => {
@@ -30,7 +31,7 @@ const AccountSecurityModal = ({ isOpen, onClose }) => {
     const token = localStorage.getItem('token');
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/change-password', {
+      const res = await fetch(`${API_URL}/auth/change-password`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

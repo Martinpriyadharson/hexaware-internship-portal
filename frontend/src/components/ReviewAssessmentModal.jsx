@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../config/api';
 import { X, CheckCircle2, XCircle, MessageSquare, Award, AlertCircle } from 'lucide-react';
 
 const ReviewAssessmentModal = ({ result, onClose, onReviewSuccess }) => {
@@ -16,7 +17,7 @@ const ReviewAssessmentModal = ({ result, onClose, onReviewSuccess }) => {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/evaluate', {
+      const res = await fetch(`${API_URL}/mentor/evaluate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

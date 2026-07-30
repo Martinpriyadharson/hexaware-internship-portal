@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../config/api';
 import { X, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const AssignAssessmentModal = ({ candidates, onClose, onAssignSuccess }) => {
@@ -32,7 +33,7 @@ const AssignAssessmentModal = ({ candidates, onClose, onAssignSuccess }) => {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/assign', {
+      const res = await fetch(`${API_URL}/mentor/assign`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

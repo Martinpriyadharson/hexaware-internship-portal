@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import { API_URL, SOCKET_URL } from '../config/api';
 import DateRangePicker from './DateRangePicker';
 import NotificationDrawer from './NotificationDrawer';
 import AccountSecurityModal from './AccountSecurityModal';
@@ -32,7 +33,7 @@ const TopNavigation = ({
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:5000/api/presence/status', {
+      const res = await fetch(`${API_URL}/presence/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -57,7 +58,7 @@ const TopNavigation = ({
     }
     const token = localStorage.getItem('token');
     if (!token) return;
-    const socket = io('http://localhost:5000', { auth: { token } });
+    const socket = io(SOCKET_URL, { auth: { token } });
     socket.on('notification:new', () => {
       setUnreadCount(prev => prev + 1);
     });
@@ -69,7 +70,7 @@ const TopNavigation = ({
     const uid = user?._id || user?.id;
     if (!token || !uid) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/presence/user/${uid}`, {
+      const res = await fetch(`${API_URL}/presence/user/${uid}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -84,7 +85,7 @@ const TopNavigation = ({
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/notifications', {
+      const res = await fetch(`${API_URL}/mentor/notifications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -100,7 +101,7 @@ const TopNavigation = ({
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/profile', {
+      const res = await fetch(`${API_URL}/mentor/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {

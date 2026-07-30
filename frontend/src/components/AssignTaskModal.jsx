@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 import { X, Send, ClipboardList, Calendar, User, FileText, CheckCircle2 } from 'lucide-react';
 
 const AssignTaskModal = ({ candidates = [], onClose, onTaskAssigned }) => {
@@ -23,7 +24,7 @@ const AssignTaskModal = ({ candidates = [], onClose, onTaskAssigned }) => {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/tasks/create', {
+      const res = await fetch(`${API_URL}/tasks/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

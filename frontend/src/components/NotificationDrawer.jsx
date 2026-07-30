@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../config/api';
 import { X, CheckCheck, Trash2, Bell, CheckCircle2, Clock, UserPlus } from 'lucide-react';
 
 const NotificationDrawer = ({ isOpen, onClose, onSelectCandidateForAllocation, onUnreadCountChange }) => {
@@ -20,7 +21,7 @@ const NotificationDrawer = ({ isOpen, onClose, onSelectCandidateForAllocation, o
     setLoading(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/notifications', {
+      const res = await fetch(`${API_URL}/mentor/notifications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -69,7 +70,7 @@ const NotificationDrawer = ({ isOpen, onClose, onSelectCandidateForAllocation, o
   const markAllRead = async () => {
     const token = localStorage.getItem('token');
     try {
-      await fetch('http://localhost:5000/api/mentor/notifications/read', {
+      await fetch(`${API_URL}/mentor/notifications/read`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -81,7 +82,7 @@ const NotificationDrawer = ({ isOpen, onClose, onSelectCandidateForAllocation, o
   const markRead = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await fetch(`http://localhost:5000/api/mentor/notifications/${id}/read`, {
+      await fetch(`${API_URL}/mentor/notifications/${id}/read`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -93,7 +94,7 @@ const NotificationDrawer = ({ isOpen, onClose, onSelectCandidateForAllocation, o
   const deleteNotification = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await fetch(`http://localhost:5000/api/mentor/notifications/${id}`, {
+      await fetch(`${API_URL}/mentor/notifications/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
