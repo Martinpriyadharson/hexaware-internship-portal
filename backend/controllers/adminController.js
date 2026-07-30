@@ -199,3 +199,43 @@ exports.createMentor = async (req, res) => {
     res.status(500).json({ msg: 'Server error creating mentor account' });
   }
 };
+
+// @route   DELETE /api/admin/candidates/:id
+// @desc    Delete a candidate account (Admin only)
+exports.deleteCandidate = async (req, res) => {
+  try {
+    const candidateId = req.params.id;
+    const candidate = await User.findById(candidateId);
+    if (!candidate) {
+      return res.status(404).json({ msg: 'Candidate not found' });
+    }
+
+    if (candidate.role !== 'Candidate') {
+      return res.status(400).json({ msg: 'Only Candidate accounts can be deleted using this route' });
+    }
+
+    // Delete candidate user document
+    await User.findByIdAndDelete(candidateId);
+    // Delete assessment results associated with candidate
+    await AssessmentResult.deleteMany({ candidateId });
+    // Delete notifications associated with candidate
+    await Notification.deleteMany({ userId: candidateId });
+
+    logSecurityEvent({
+      eventType: 'CANDIDATE_DELETED',
+      userId: req.user.id,
+      userRole: req.user.role || 'Admin',
+      details: {
+        deletedCandidateId: candidateId,
+        name: candidate.name,
+        email: candidate.email
+      },
+      ip: req.ip
+    });
+
+    res.json({ success: true, msg: `Candidate ${candidate.name} deleted successfully` });
+  } catch (err) {
+    console.error('Error deleting candidate:', err);
+    res.status(500).json({ msg: 'Server error deleting candidate' });
+  }
+};

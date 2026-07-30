@@ -7,7 +7,7 @@ import CandidateDetailsModal from '../components/CandidateDetailsModal';
 import ChatHub from './ChatHub';
 import { 
   Users, ClipboardList, UserCheck, Clock, CheckCircle2, 
-  TrendingUp, Search, Plus, Eye, Award, Building, FileText, ChevronRight, ShieldCheck, Mail, LogOut, Copy, Download, AlertCircle, User
+  TrendingUp, Search, Plus, Eye, Award, Building, FileText, ChevronRight, ShieldCheck, Mail, LogOut, Copy, Download, AlertCircle, User, Trash2
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { openResumeInNewTab, downloadResumeFile, getResumeFileName } from '../utils/resumeHelper';
@@ -19,6 +19,8 @@ const AdminDashboard = ({ user, onLogout }) => {
   const [provisionedMentorCredentials, setProvisionedMentorCredentials] = useState(null);
   const [copiedCredentials, setCopiedCredentials] = useState(false);
   const [viewingProfileCandidate, setViewingProfileCandidate] = useState(null);
+  const [candidateToDelete, setCandidateToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [popupModal, setPopupModal] = useState({ open: false, title: '', message: '', type: 'info' });
   const [overviewData, setOverviewData] = useState({
     summary: {
@@ -173,6 +175,53 @@ const AdminDashboard = ({ user, onLogout }) => {
     }
   };
 
+  const handleDeleteCandidate = async () => {
+    if (!candidateToDelete) return;
+    setIsDeleting(true);
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/admin/candidates/${candidateToDelete._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (res.ok) {
+        setOverviewData(prev => ({
+          ...prev,
+          candidates: prev.candidates.filter(c => c._id !== candidateToDelete._id)
+        }));
+        setPopupModal({
+          open: true,
+          title: 'Candidate Cancelled & Deleted',
+          message: `Candidate ${candidateToDelete.name} (${candidateToDelete.email}) has been permanently deleted from the portal database.`,
+          type: 'success'
+        });
+        setCandidateToDelete(null);
+      } else {
+        const data = await res.json();
+        setPopupModal({
+          open: true,
+          title: 'Deletion Failed',
+          message: data.msg || 'Error deleting candidate account.',
+          type: 'warning'
+        });
+      }
+    } catch (err) {
+      console.error('Error deleting candidate:', err);
+      setPopupModal({
+        open: true,
+        title: 'Deletion Error',
+        message: 'Network error deleting candidate account.',
+        type: 'warning'
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#070913', color: '#f8fafc' }}>
       {/* Sidebar */}
@@ -221,22 +270,26 @@ const AdminDashboard = ({ user, onLogout }) => {
               </div>
 
               {/* KPI Summary Cards Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div className="glass-card" style={{ padding: '20px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Total Candidates</div>
                     <Users size={18} style={{ color: '#818cf8' }} />
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ffffff', marginTop: '6px' }}>{overviewData.candidates.length}</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ffffff', marginTop: '6px' }}>
+                    {overviewData.candidates.length || overviewData.summary.totalCandidates}
+                  </div>
                   <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>Registered in portal</div>
                 </div>
 
                 <div className="glass-card" style={{ padding: '20px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Active Corporate Mentors</div>
-                    <UserCheck size={18} style={{ color: '#10b981' }} />
+                    <UserCheck size={18} style={{ color: '#34d399' }} />
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ffffff', marginTop: '6px' }}>{overviewData.mentors.length}</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ffffff', marginTop: '6px' }}>
+                    {overviewData.mentors.length || overviewData.summary.activeMentors}
+                  </div>
                   <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '4px' }}>Evaluators active</div>
                 </div>
 
@@ -311,12 +364,20 @@ const AdminDashboard = ({ user, onLogout }) => {
                   <h1 style={{ fontSize: '1.85rem', fontWeight: '800', color: '#ffffff', margin: 0 }}>Mentor Allocation & Provisioning</h1>
                   <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '4px' }}>Allocate corporate mentors to candidates and provision evaluator accounts</p>
                 </div>
-                <button onClick={() => setShowCreateMentorModal(true)} className="glow-btn">
-                  <Plus size={16} /><span>Create Official Mentor</span>
+                <button 
+                  onClick={() => setShowCreateMentorModal(true)}
+                  className="glow-btn"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 22px', borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', color: '#ffffff',
+                    fontWeight: '700', cursor: 'pointer', border: 'none'
+                  }}
+                >
+                  <Plus size={18} /> Create Official Mentor
                 </button>
               </div>
 
-              {/* Candidate Allocation Table */}
+              {/* Mentors Table */}
               <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
                 <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#ffffff', marginBottom: '16px' }}>Candidate Mentor Allocation List</h3>
                 <div style={{ overflowX: 'auto' }}>
@@ -332,7 +393,10 @@ const AdminDashboard = ({ user, onLogout }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {overviewData.candidates.map((cand, idx) => {
+                      {overviewData.candidates.filter(c => {
+                        const hasFailed = (c.hasAttemptedAssessment || c.assessmentPercentage > 0) && !c.hasPassedAssessment && c.assessmentPercentage !== undefined && c.assessmentPercentage < 75;
+                        return !hasFailed;
+                      }).map((cand, idx) => {
                         const hasFailedTest = (cand.hasAttemptedAssessment || cand.assessmentPercentage > 0) && !cand.hasPassedAssessment && cand.assessmentPercentage !== undefined && cand.assessmentPercentage < 75;
                         const isTestDone = (cand.isAssessmentSubmitted || cand.hasPassedAssessment || (cand.assessmentPercentage !== undefined && cand.assessmentPercentage >= 75)) && !hasFailedTest;
                         const isEligible = cand.isProfileCompleted && isTestDone;
@@ -458,6 +522,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                         <th style={{ padding: '12px' }}>Onboarding Status</th>
                         <th style={{ padding: '12px' }}>Assigned Mentor</th>
                         <th style={{ padding: '12px' }}>Resume / Document</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -564,6 +629,20 @@ const AdminDashboard = ({ user, onLogout }) => {
                             ) : (
                               <span style={{ color: '#64748b', fontSize: '0.78rem' }}>No Document</span>
                             )}
+                          </td>
+                          <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
+                            <button 
+                              onClick={() => setCandidateToDelete(cand)}
+                              title="Cancel & Delete candidate account"
+                              style={{ 
+                                background: 'rgba(239, 68, 68, 0.12)', color: '#f87171', 
+                                border: '1px solid rgba(239, 68, 68, 0.3)', padding: '6px 12px', 
+                                borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', 
+                                alignItems: 'center', gap: '5px', fontSize: '0.78rem', fontWeight: '600'
+                              }}
+                            >
+                              <Trash2 size={13} /> Delete Candidate
+                            </button>
                           </td>
                         </tr>
                       );
@@ -943,6 +1022,72 @@ const AdminDashboard = ({ user, onLogout }) => {
           candidate={viewingProfileCandidate} 
           onClose={() => setViewingProfileCandidate(null)} 
         />
+      )}
+
+      {/* Delete Candidate Confirmation Modal */}
+      {candidateToDelete && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '460px', background: '#0a0c1a',
+            border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '22px', padding: '28px',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.9), 0 0 35px rgba(239, 68, 68, 0.2)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+              <div style={{
+                width: '46px', height: '46px', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#ef4444', flexShrink: 0
+              }}>
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#ffffff', margin: 0 }}>
+                  Cancel Candidate Account
+                </h3>
+                <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                  Permanent Admin Action
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px', marginBottom: '24px' }}>
+              <div style={{ color: '#f8fafc', fontWeight: '700', fontSize: '0.95rem' }}>{candidateToDelete.name}</div>
+              <div style={{ color: '#818cf8', fontSize: '0.8rem', marginTop: '2px' }}>{candidateToDelete.email}</div>
+              <p style={{ color: '#cbd5e1', fontSize: '0.825rem', marginTop: '12px', marginBottom: 0, lineHeight: '1.5' }}>
+                Are you sure you want to cancel and delete this candidate account from the portal database? This will permanently remove their profile, test records, and allocation history.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setCandidateToDelete(null)}
+                disabled={isDeleting}
+                className="secondary-btn"
+                style={{ padding: '10px 18px', fontSize: '0.85rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteCandidate}
+                disabled={isDeleting}
+                className="glow-btn"
+                style={{
+                  padding: '10px 20px', fontSize: '0.85rem',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)', color: '#ffffff', cursor: 'pointer', border: 'none'
+                }}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Candidate'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

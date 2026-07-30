@@ -16,4 +16,7 @@ router.put('/allocate-mentor', adminController.allocateMentor);
 // @route   POST /api/admin/create-mentor
 router.post('/create-mentor', adminController.createMentor);
 
+// @route   DELETE /api/admin/candidates/:id
+router.delete('/candidates/:id', adminController.deleteCandidate);
+
 module.exports = router;
