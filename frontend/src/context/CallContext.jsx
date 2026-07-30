@@ -371,40 +371,60 @@ export const CallProvider = ({ children, user, token }) => {
 
   // Screen Share Stream Toggle
   const toggleScreenShare = async () => {
-    if (!pcRef.current) return;
-
     if (isScreenSharing) {
-      // Revert to camera
+      // Revert to camera / normal view
       try {
-        const camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        const camVideoTrack = camStream.getVideoTracks()[0];
-
-        const sender = pcRef.current.getSenders().find(s => s.track.kind === 'video');
-        if (sender) sender.replaceTrack(camVideoTrack);
-
-        localStreamRef.current = camStream;
-        if (localVideoRef.current) localVideoRef.current.srcObject = camStream;
-        setIsScreenSharing(false);
+        const camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
+        if (camStream) {
+          const camVideoTrack = camStream.getVideoTracks()[0];
+          const sender = pcRef.current?.getSenders()?.find(s => s.track?.kind === 'video');
+          if (sender && camVideoTrack) {
+            sender.replaceTrack(camVideoTrack);
+          }
+          localStreamRef.current = camStream;
+          if (localVideoRef.current) localVideoRef.current.srcObject = camStream;
+        }
       } catch (err) {
-        console.error('Error switching back to camera:', err);
+        console.warn('Could not restore camera stream:', err);
+      } finally {
+        setIsScreenSharing(false);
       }
     } else {
       // Switch to Screen Share
       try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+          video: { cursor: 'always' }, 
+          audio: false 
+        });
         const screenVideoTrack = screenStream.getVideoTracks()[0];
 
-        const sender = pcRef.current.getSenders().find(s => s.track.kind === 'video');
-        if (sender) sender.replaceTrack(screenVideoTrack);
+        if (pcRef.current) {
+          const sender = pcRef.current.getSenders()?.find(s => s.track?.kind === 'video');
+          if (sender) {
+            sender.replaceTrack(screenVideoTrack);
+          } else {
+            pcRef.current.addTrack(screenVideoTrack, screenStream);
+          }
+        }
 
         if (localVideoRef.current) localVideoRef.current.srcObject = screenStream;
         setIsScreenSharing(true);
 
+        // When user stops sharing via browser bar ("Stop sharing")
         screenVideoTrack.onended = () => {
-          toggleScreenShare(); // Revert on stop sharing
+          setIsScreenSharing(false);
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = localStreamRef.current;
+          }
         };
       } catch (err) {
-        console.error('Error starting screen share:', err);
+        if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
+          // User clicked Cancel on browser screen picker dialog - handle gracefully
+          console.log('[INFO] Screen sharing canceled by user.');
+        } else {
+          console.warn('Screen share error:', err);
+        }
+        setIsScreenSharing(false);
       }
     }
   };
