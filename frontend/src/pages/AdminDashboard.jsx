@@ -440,24 +440,48 @@ const AdminDashboard = ({ user, onLogout }) => {
                             </span>
                           </td>
                           <td style={{ padding: '14px 12px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                               {cand.isProfileCompleted ? (
-                                <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <CheckCircle2 size={12} /> Profile Completed
+                                <span style={{ 
+                                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%)', 
+                                  color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.35)', 
+                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                  display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.15)', whiteSpace: 'nowrap'
+                                }}>
+                                  <CheckCircle2 size={12} style={{ color: '#34d399' }} /> Profile Completed
                                 </span>
                               ) : (
-                                <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <Clock size={12} /> Profile Incomplete
+                                <span style={{ 
+                                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.08) 100%)', 
+                                  color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.35)', 
+                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                  display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)', whiteSpace: 'nowrap'
+                                }}>
+                                  <Clock size={12} style={{ color: '#fbbf24' }} /> Profile Incomplete
                                 </span>
                               )}
                               
                               {cand.isAssessmentSubmitted || cand.hasPassedAssessment ? (
-                                <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <CheckCircle2 size={12} /> Test Passed ({cand.assessmentPercentage || 100}%)
+                                <span style={{ 
+                                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(79, 70, 229, 0.08) 100%)', 
+                                  color: '#a5b4fc', border: '1px solid rgba(99, 102, 241, 0.35)', 
+                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                  display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                  boxShadow: '0 2px 8px rgba(99, 102, 241, 0.15)', whiteSpace: 'nowrap'
+                                }}>
+                                  <Award size={12} style={{ color: '#a5b4fc' }} /> Test Passed ({cand.assessmentPercentage || 100}%)
                                 </span>
                               ) : (
-                                <span style={{ color: '#38bdf8', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <Clock size={12} /> Test Pending
+                                <span style={{ 
+                                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(2, 132, 199, 0.08) 100%)', 
+                                  color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', 
+                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                  display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                  boxShadow: '0 2px 8px rgba(56, 189, 248, 0.15)', whiteSpace: 'nowrap'
+                                }}>
+                                  <Clock size={12} style={{ color: '#38bdf8' }} /> Test Pending
                                 </span>
                               )}
                             </div>
