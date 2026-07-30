@@ -658,3 +658,37 @@ h1, h2, h3, h4, h5, h6 {
     justify-content: center;
   }
 }
+
+/* Custom Responsive Scrollbars for Data Tables */
+.responsive-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+.responsive-table-container::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.responsive-table-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+}
+
+.responsive-table-container::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.3);
+  border-radius: 6px;
+}
+
+.responsive-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 140, 248, 0.6);
+}
+
+@media (max-width: 1024px) {
+  .dashboard-main-content {
+    margin-left: 0 !important;
+    padding: 16px !important;
+  }
+}

@@ -380,14 +380,14 @@ const AdminDashboard = ({ user, onLogout }) => {
               {/* Mentors Table */}
               <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
                 <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#ffffff', marginBottom: '16px' }}>Candidate Mentor Allocation List</h3>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', textAlign: 'left' }}>
+                <div className="responsive-table-container">
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', textAlign: 'left', minWidth: '850px' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8' }}>
-                        <th style={{ padding: '12px' }}>Candidate Name</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Candidate Name</th>
                         <th style={{ padding: '12px' }}>Email & College</th>
-                        <th style={{ padding: '12px' }}>Track</th>
-                        <th style={{ padding: '12px' }}>Assigned Mentor</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Track</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Assigned Mentor</th>
                         <th style={{ padding: '12px', whiteSpace: 'nowrap', minWidth: '170px' }}>Prerequisite Status</th>
                         <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Action</th>
                       </tr>
@@ -403,9 +403,11 @@ const AdminDashboard = ({ user, onLogout }) => {
                         return (
                           <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                             <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff', whiteSpace: 'nowrap' }}>{cand.name}</td>
-                            <td style={{ padding: '14px 12px' }}>
-                              <div style={{ color: '#f8fafc' }}>{cand.email}</div>
-                              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Details')}</div>
+                            <td style={{ padding: '14px 12px', maxWidth: '220px' }}>
+                              <div style={{ color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cand.email}>{cand.email}</div>
+                              <div style={{ fontSize: '0.78rem', color: '#94a3b8', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={cand.college || ''}>
+                                {cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Details')}
+                              </div>
                             </td>
                             <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
                               <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
@@ -511,17 +513,17 @@ const AdminDashboard = ({ user, onLogout }) => {
               </div>
 
               <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', textAlign: 'left' }}>
+                <div className="responsive-table-container">
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', textAlign: 'left', minWidth: '950px' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8' }}>
-                        <th style={{ padding: '12px' }}>Candidate Name</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Candidate Name</th>
                         <th style={{ padding: '12px' }}>Email & College</th>
                         <th style={{ padding: '12px' }}>Degree & Branch</th>
-                        <th style={{ padding: '12px' }}>Preferred Track</th>
-                        <th style={{ padding: '12px' }}>Onboarding Status</th>
-                        <th style={{ padding: '12px' }}>Assigned Mentor</th>
-                        <th style={{ padding: '12px' }}>Resume / Document</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Preferred Track</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Onboarding Status</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Assigned Mentor</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Resume / Document</th>
                         <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Action</th>
                       </tr>
                     </thead>
@@ -530,14 +532,16 @@ const AdminDashboard = ({ user, onLogout }) => {
                         const hasFailed = (cand.hasAttemptedAssessment || cand.assessmentPercentage > 0) && !cand.hasPassedAssessment && cand.assessmentPercentage !== undefined && cand.assessmentPercentage < 75;
                         return (
                           <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                            <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff' }}>{cand.name}</td>
-                            <td style={{ padding: '14px 12px' }}>
-                              <div style={{ color: '#f8fafc' }}>{cand.email}</div>
-                              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Setup')}</div>
+                            <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff', whiteSpace: 'nowrap' }}>{cand.name}</td>
+                            <td style={{ padding: '14px 12px', maxWidth: '220px' }}>
+                              <div style={{ color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cand.email}>{cand.email}</div>
+                              <div style={{ fontSize: '0.78rem', color: '#94a3b8', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={cand.college || ''}>
+                                {cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Setup')}
+                              </div>
                             </td>
-                            <td style={{ padding: '14px 12px' }}>
-                              <div style={{ color: '#f8fafc' }}>{cand.degree || (cand.isProfileCompleted ? 'B.Tech / B.E' : 'Not Set')}</div>
-                              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.branch || 'Engineering'}</div>
+                            <td style={{ padding: '14px 12px', maxWidth: '150px' }}>
+                              <div style={{ color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cand.degree || (cand.isProfileCompleted ? 'B.Tech / B.E' : 'Not Set')}</div>
+                              <div style={{ fontSize: '0.78rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cand.branch || 'Engineering'}</div>
                             </td>
                             <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
                               <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
