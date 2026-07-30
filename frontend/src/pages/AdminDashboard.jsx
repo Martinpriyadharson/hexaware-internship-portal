@@ -516,19 +516,19 @@ const AdminDashboard = ({ user, onLogout }) => {
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '4px' }}>View and manage registered intern candidates across specializations</p>
               </div>
 
-              <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
+              <div className="glass-card" style={{ padding: '20px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
                 <div className="responsive-table-container">
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', textAlign: 'left', minWidth: '950px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8' }}>
-                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Candidate Name</th>
-                        <th style={{ padding: '12px' }}>Email & College</th>
-                        <th style={{ padding: '12px' }}>Degree & Branch</th>
-                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Preferred Track</th>
-                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Onboarding Status</th>
-                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Assigned Mentor</th>
-                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Resume / Document</th>
-                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Action</th>
+                        <th style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>Candidate Name</th>
+                        <th style={{ padding: '10px 8px' }}>Email & College</th>
+                        <th style={{ padding: '10px 8px' }}>Degree & Branch</th>
+                        <th style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>Preferred Track</th>
+                        <th style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>Onboarding Status</th>
+                        <th style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>Assigned Mentor</th>
+                        <th style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>Resume / Document</th>
+                        <th style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -536,43 +536,43 @@ const AdminDashboard = ({ user, onLogout }) => {
                         const hasFailed = (cand.hasAttemptedAssessment || cand.assessmentPercentage > 0) && !cand.hasPassedAssessment && cand.assessmentPercentage !== undefined && cand.assessmentPercentage < 75;
                         return (
                           <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                            <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff', whiteSpace: 'nowrap' }}>{cand.name}</td>
-                            <td style={{ padding: '14px 12px', maxWidth: '220px' }}>
+                            <td style={{ padding: '10px 8px', fontWeight: '700', color: '#ffffff', whiteSpace: 'nowrap' }}>{cand.name}</td>
+                            <td style={{ padding: '10px 8px', maxWidth: '180px' }}>
                               <div style={{ color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cand.email}>{cand.email}</div>
-                              <div style={{ fontSize: '0.78rem', color: '#94a3b8', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={cand.college || ''}>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={cand.college || ''}>
                                 {cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Setup')}
                               </div>
                             </td>
-                            <td style={{ padding: '14px 12px', maxWidth: '150px' }}>
+                            <td style={{ padding: '10px 8px', maxWidth: '120px' }}>
                               <div style={{ color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cand.degree || (cand.isProfileCompleted ? 'B.Tech / B.E' : 'Not Set')}</div>
-                              <div style={{ fontSize: '0.78rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cand.branch || 'Engineering'}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cand.branch || 'Engineering'}</div>
                             </td>
-                            <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
-                              <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
+                            <td style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>
+                              <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '3px 9px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
                                 {cand.preferredStack || 'Python Full Stack'}
                               </span>
                             </td>
-                            <td style={{ padding: '14px 12px' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <td style={{ padding: '10px 8px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 {cand.isProfileCompleted ? (
                                   <span style={{ 
                                     background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%)', 
                                     color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.35)', 
-                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    padding: '3px 8px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content',
                                     boxShadow: '0 2px 8px rgba(16, 185, 129, 0.15)', whiteSpace: 'nowrap'
                                   }}>
-                                    <CheckCircle2 size={12} style={{ color: '#34d399' }} /> Profile Completed
+                                    <CheckCircle2 size={11} style={{ color: '#34d399' }} /> Profile Completed
                                   </span>
                                 ) : (
                                   <span style={{ 
                                     background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.08) 100%)', 
                                     color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.35)', 
-                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    padding: '3px 8px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content',
                                     boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)', whiteSpace: 'nowrap'
                                   }}>
-                                    <Clock size={12} style={{ color: '#fbbf24' }} /> Profile Incomplete
+                                    <Clock size={11} style={{ color: '#fbbf24' }} /> Profile Incomplete
                                   </span>
                                 )}
                                 
@@ -580,76 +580,76 @@ const AdminDashboard = ({ user, onLogout }) => {
                                   <span style={{ 
                                     background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(79, 70, 229, 0.08) 100%)', 
                                     color: '#a5b4fc', border: '1px solid rgba(99, 102, 241, 0.35)', 
-                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    padding: '3px 8px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content',
                                     boxShadow: '0 2px 8px rgba(99, 102, 241, 0.15)', whiteSpace: 'nowrap'
                                   }}>
-                                    <Award size={12} style={{ color: '#a5b4fc' }} /> Test Passed ({cand.assessmentPercentage || 100}%)
+                                    <Award size={11} style={{ color: '#a5b4fc' }} /> Test Passed ({cand.assessmentPercentage || 100}%)
                                   </span>
                                 ) : hasFailed ? (
                                   <span style={{ 
                                     background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.08) 100%)', 
                                     color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.35)', 
-                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    padding: '3px 8px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content',
                                     boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15)', whiteSpace: 'nowrap'
                                   }}>
-                                    <AlertCircle size={12} style={{ color: '#f87171' }} /> Test Failed ({cand.assessmentPercentage}%)
+                                    <AlertCircle size={11} style={{ color: '#f87171' }} /> Test Failed ({cand.assessmentPercentage}%)
                                   </span>
                                 ) : (
                                   <span style={{ 
                                     background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(2, 132, 199, 0.08) 100%)', 
                                     color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', 
-                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    padding: '3px 8px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content',
                                     boxShadow: '0 2px 8px rgba(56, 189, 248, 0.15)', whiteSpace: 'nowrap'
                                   }}>
-                                    <Clock size={12} style={{ color: '#38bdf8' }} /> Test Pending
+                                    <Clock size={11} style={{ color: '#38bdf8' }} /> Test Pending
                                   </span>
                                 )}
                               </div>
                             </td>
-                          <td style={{ padding: '14px 12px' }}>
+                          <td style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>
                             {cand.assignedMentorId ? (
-                              <span style={{ color: '#10b981', fontWeight: '700' }}>{cand.assignedMentorId.name}</span>
+                              <span style={{ color: '#10b981', fontWeight: '700', fontSize: '0.8rem' }}>{cand.assignedMentorId.name}</span>
                             ) : (
-                              <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>Unallocated</span>
+                              <span style={{ color: '#f59e0b', fontSize: '0.78rem' }}>Unallocated</span>
                             )}
                           </td>
-                          <td style={{ padding: '14px 12px' }}>
+                          <td style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>
                             {cand.resumeUrl ? (
-                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                 <button 
                                   onClick={() => openResumeInNewTab(cand.resumeUrl, cand.resumeName || getResumeFileName(cand))}
                                   title="View Resume in New Tab"
-                                  style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '600' }}
+                                  style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '4px 7px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.72rem', fontWeight: '600' }}
                                 >
-                                  <Eye size={13} /> View
+                                  <Eye size={12} /> View
                                 </button>
                                 <button 
                                   onClick={() => downloadResumeFile(cand.resumeUrl, `${cand.name || 'Candidate'}_Resume.pdf`)}
                                   title="Download Resume PDF"
-                                  style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '600' }}
+                                  style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 7px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.72rem', fontWeight: '600' }}
                                 >
-                                  <Download size={13} /> Download
+                                  <Download size={12} /> Download
                                 </button>
                               </div>
                             ) : (
-                              <span style={{ color: '#64748b', fontSize: '0.78rem' }}>No Document</span>
+                              <span style={{ color: '#64748b', fontSize: '0.75rem' }}>No Document</span>
                             )}
                           </td>
-                          <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>
                             <button 
                               onClick={() => setCandidateToDelete(cand)}
                               title="Cancel & Delete candidate account"
                               style={{ 
                                 background: 'rgba(239, 68, 68, 0.12)', color: '#f87171', 
-                                border: '1px solid rgba(239, 68, 68, 0.3)', padding: '6px 12px', 
-                                borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', 
-                                alignItems: 'center', gap: '5px', fontSize: '0.78rem', fontWeight: '600'
+                                border: '1px solid rgba(239, 68, 68, 0.3)', padding: '4px 9px', 
+                                borderRadius: '7px', cursor: 'pointer', display: 'inline-flex', 
+                                alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '600'
                               }}
                             >
-                              <Trash2 size={13} /> Delete Candidate
+                              <Trash2 size={12} /> Delete
                             </button>
                           </td>
                         </tr>
