@@ -173,26 +173,32 @@ io.on('connection', async (socket) => {
     }
   });
 
-  socket.on('call:ice-candidate', ({ recipientId, candidate }) => {
-    if (recipientId && userId) {
-      io.to(String(recipientId)).emit('call:ice-candidate', {
+  socket.on('call:ice-candidate', ({ recipientId, targetId, candidate }) => {
+    const target = recipientId || targetId;
+    if (target && userId) {
+      io.to(String(target)).emit('call:ice-candidate', {
         senderId: userId,
         candidate
       });
     }
   });
 
-  socket.on('call:end', ({ recipientId }) => {
-    if (recipientId && userId) {
-      io.to(String(recipientId)).emit('call:ended', {
+  socket.on('call:end', ({ recipientId, targetId }) => {
+    const target = recipientId || targetId;
+    if (target && userId) {
+      io.to(String(target)).emit('call:ended', {
+        senderId: userId
+      });
+      io.to(String(target)).emit('call:end', {
         senderId: userId
       });
     }
   });
 
-  socket.on('call:toggle-media', ({ recipientId, mediaType, enabled }) => {
-    if (recipientId && userId) {
-      io.to(String(recipientId)).emit('call:media-toggled', {
+  socket.on('call:toggle-media', ({ recipientId, targetId, mediaType, enabled }) => {
+    const target = recipientId || targetId;
+    if (target && userId) {
+      io.to(String(target)).emit('call:media-toggled', {
         senderId: userId,
         mediaType,
         enabled

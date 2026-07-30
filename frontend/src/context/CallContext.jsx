@@ -114,17 +114,21 @@ export const CallProvider = ({ children, user, token }) => {
     });
 
     // Remote Peer Call End Listener
-    socket.on('call:end', () => {
+    const handleRemoteEnd = () => {
       stopRinging();
-      cleanupWebRTC();
       setCallState('ended');
-      setTimeout(() => resetCallState(), 2000);
-    });
+      setTimeout(() => resetCallState(), 1200);
+    };
+
+    socket.on('call:end', handleRemoteEnd);
+    socket.on('call:ended', handleRemoteEnd);
 
     return () => {
       socket.disconnect();
     };
   }, [token, userId, callState]);
+
+  const remoteAudioRef = useRef(null);
 
   const stopRinging = () => {
     if (ringAudioRef.current) {
@@ -141,13 +145,6 @@ export const CallProvider = ({ children, user, token }) => {
     }, 1000);
   };
 
-  const cleanupWebRTC = () => {
-    if (pcRef.current) {
-        pcRef.current.close();
-        pcRef.current = null;
-    }
-  };
-
   const resetCallState = () => {
     stopRinging();
     if (durationTimerRef.current) clearInterval(durationTimerRef.current);
@@ -162,6 +159,10 @@ export const CallProvider = ({ children, user, token }) => {
     if (remoteStreamRef.current) {
       remoteStreamRef.current.getTracks().forEach(t => t.stop());
       remoteStreamRef.current = null;
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.pause();
+      remoteAudioRef.current.srcObject = null;
     }
     pendingOfferRef.current = null;
     setCallState('idle');
@@ -181,9 +182,10 @@ export const CallProvider = ({ children, user, token }) => {
     pcRef.current = pc;
 
     pc.onicecandidate = (event) => {
-      if (event.candidate) {
+      if (event.candidate && targetId) {
         socketRef.current?.emit('call:ice-candidate', {
-          targetId,
+          recipientId: targetId,
+          targetId: targetId,
           candidate: event.candidate
         });
       }
@@ -195,6 +197,17 @@ export const CallProvider = ({ children, user, token }) => {
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = stream;
       }
+
+      // Dedicated Audio element for crystal clear voice playback
+      try {
+        if (!remoteAudioRef.current) {
+          remoteAudioRef.current = new Audio();
+          remoteAudioRef.current.autoplay = true;
+        }
+        remoteAudioRef.current.srcObject = stream;
+        remoteAudioRef.current.play().catch(() => {});
+      } catch (e) {}
+
       const vTracks = stream ? stream.getVideoTracks() : [];
       const isActive = vTracks.length > 0 && vTracks[0].enabled && !vTracks[0].muted && vTracks[0].readyState === 'live';
       setHasRemoteVideo(!!isActive);
@@ -365,12 +378,15 @@ export const CallProvider = ({ children, user, token }) => {
 
   // End active call
   const endCall = () => {
+    stopRinging();
     if (peerInfo && socketRef.current) {
       socketRef.current.emit('call:end', {
-        recipientId: peerInfo.id
+        recipientId: peerInfo.id,
+        targetId: peerInfo.id
       });
     }
-    resetCallState();
+    setCallState('ended');
+    setTimeout(() => resetCallState(), 800);
   };
 
   // Toggle Mute
