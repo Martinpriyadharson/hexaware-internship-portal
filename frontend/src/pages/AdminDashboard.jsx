@@ -246,7 +246,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                     <Clock size={18} style={{ color: '#f59e0b' }} />
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ffffff', marginTop: '6px' }}>
-                    {overviewData.candidates.filter(c => !c.assignedMentorId && (c.isAssessmentSubmitted || c.assessmentStatus === 'Pending Mentor Allocation' || c.hasPassedAssessment || (c.assessmentPercentage !== undefined && c.assessmentPercentage > 0))).length}
+                    {overviewData.candidates.filter(c => !c.assignedMentorId && c.isProfileCompleted && (c.hasPassedAssessment || c.assessmentStatus === 'Pending Mentor Allocation' || (c.assessmentPercentage !== undefined && c.assessmentPercentage >= 75))).length}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '4px' }}>Awaiting mentor assignment</div>
                 </div>
@@ -272,7 +272,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                     </button>
                   </div>
                   <div style={{ overflowX: 'auto' }}>
-                    {overviewData.candidates.filter(c => !c.assignedMentorId && (c.isAssessmentSubmitted || c.assessmentStatus === 'Pending Mentor Allocation' || c.hasPassedAssessment || (c.assessmentPercentage !== undefined && c.assessmentPercentage > 0))).length === 0 ? (
+                    {overviewData.candidates.filter(c => !c.assignedMentorId && c.isProfileCompleted && (c.hasPassedAssessment || c.assessmentStatus === 'Pending Mentor Allocation' || (c.assessmentPercentage !== undefined && c.assessmentPercentage >= 75))).length === 0 ? (
                       <div style={{ padding: '30px 0', textAlign: 'center', color: '#94a3b8', fontSize: '0.875rem' }}>
                         All eligible candidates have been allocated to mentors! 🎉
                       </div>
@@ -286,7 +286,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                           </tr>
                         </thead>
                         <tbody>
-                          {overviewData.candidates.filter(c => !c.assignedMentorId && (c.isAssessmentSubmitted || c.assessmentStatus === 'Pending Mentor Allocation' || c.hasPassedAssessment || (c.assessmentPercentage !== undefined && c.assessmentPercentage > 0))).slice(0, 5).map((cand, idx) => (
+                          {overviewData.candidates.filter(c => !c.assignedMentorId && c.isProfileCompleted && (c.hasPassedAssessment || c.assessmentStatus === 'Pending Mentor Allocation' || (c.assessmentPercentage !== undefined && c.assessmentPercentage >= 75))).slice(0, 5).map((cand, idx) => (
                             <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                               <td style={{ padding: '10px 8px', color: '#f8fafc', fontWeight: '600' }}>{cand.name}</td>
                               <td style={{ padding: '10px 8px', color: '#a78bfa' }}>{cand.preferredStack || 'Python Full Stack'}</td>
@@ -333,7 +333,8 @@ const AdminDashboard = ({ user, onLogout }) => {
                     </thead>
                     <tbody>
                       {overviewData.candidates.map((cand, idx) => {
-                        const isTestDone = cand.isAssessmentSubmitted || cand.hasPassedAssessment || (cand.assessmentPercentage !== undefined && cand.assessmentPercentage >= 75);
+                        const hasFailedTest = (cand.hasAttemptedAssessment || cand.assessmentPercentage > 0) && !cand.hasPassedAssessment && cand.assessmentPercentage !== undefined && cand.assessmentPercentage < 75;
+                        const isTestDone = (cand.isAssessmentSubmitted || cand.hasPassedAssessment || (cand.assessmentPercentage !== undefined && cand.assessmentPercentage >= 75)) && !hasFailedTest;
                         const isEligible = cand.isProfileCompleted && isTestDone;
                         return (
                           <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -368,6 +369,16 @@ const AdminDashboard = ({ user, onLogout }) => {
                                 }}>
                                   <Clock size={13} style={{ color: '#fbbf24' }} /> Profile Incomplete
                                 </span>
+                              ) : hasFailedTest ? (
+                                <span style={{ 
+                                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.08) 100%)', 
+                                  color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.35)', 
+                                  padding: '5px 12px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: '700', 
+                                  display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
+                                  boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15)'
+                                }}>
+                                  <AlertCircle size={13} style={{ color: '#f87171' }} /> Test Failed ({cand.assessmentPercentage}%)
+                                </span>
                               ) : !isTestDone ? (
                                 <span style={{ 
                                   background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(2, 132, 199, 0.08) 100%)', 
@@ -398,6 +409,14 @@ const AdminDashboard = ({ user, onLogout }) => {
                                   style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', whiteSpace: 'nowrap' }}
                                 >
                                   Allocate Mentor
+                                </button>
+                              ) : hasFailedTest ? (
+                                <button 
+                                  disabled
+                                  style={{ padding: '6px 14px', fontSize: '0.78rem', background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '8px', cursor: 'not-allowed', fontWeight: '600', whiteSpace: 'nowrap' }}
+                                  title="Candidate did not achieve 75% passing threshold on test"
+                                >
+                                  Test Failed ({cand.assessmentPercentage}%)
                                 </button>
                               ) : (
                                 <button 
@@ -442,69 +461,81 @@ const AdminDashboard = ({ user, onLogout }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {overviewData.candidates.map((cand, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff' }}>{cand.name}</td>
-                          <td style={{ padding: '14px 12px' }}>
-                            <div style={{ color: '#f8fafc' }}>{cand.email}</div>
-                            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Setup')}</div>
-                          </td>
-                          <td style={{ padding: '14px 12px' }}>
-                            <div style={{ color: '#f8fafc' }}>{cand.degree || (cand.isProfileCompleted ? 'B.Tech / B.E' : 'Not Set')}</div>
-                            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.branch || 'Engineering'}</div>
-                          </td>
-                          <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
-                            <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
-                              {cand.preferredStack || 'Python Full Stack'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '14px 12px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                              {cand.isProfileCompleted ? (
-                                <span style={{ 
-                                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%)', 
-                                  color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.35)', 
-                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                  display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
-                                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.15)', whiteSpace: 'nowrap'
-                                }}>
-                                  <CheckCircle2 size={12} style={{ color: '#34d399' }} /> Profile Completed
-                                </span>
-                              ) : (
-                                <span style={{ 
-                                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.08) 100%)', 
-                                  color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.35)', 
-                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                  display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
-                                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)', whiteSpace: 'nowrap'
-                                }}>
-                                  <Clock size={12} style={{ color: '#fbbf24' }} /> Profile Incomplete
-                                </span>
-                              )}
-                              
-                              {cand.isAssessmentSubmitted || cand.hasPassedAssessment ? (
-                                <span style={{ 
-                                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(79, 70, 229, 0.08) 100%)', 
-                                  color: '#a5b4fc', border: '1px solid rgba(99, 102, 241, 0.35)', 
-                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                  display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
-                                  boxShadow: '0 2px 8px rgba(99, 102, 241, 0.15)', whiteSpace: 'nowrap'
-                                }}>
-                                  <Award size={12} style={{ color: '#a5b4fc' }} /> Test Passed ({cand.assessmentPercentage || 100}%)
-                                </span>
-                              ) : (
-                                <span style={{ 
-                                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(2, 132, 199, 0.08) 100%)', 
-                                  color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', 
-                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
-                                  display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
-                                  boxShadow: '0 2px 8px rgba(56, 189, 248, 0.15)', whiteSpace: 'nowrap'
-                                }}>
-                                  <Clock size={12} style={{ color: '#38bdf8' }} /> Test Pending
-                                </span>
-                              )}
-                            </div>
-                          </td>
+                      {overviewData.candidates.map((cand, idx) => {
+                        const hasFailed = (cand.hasAttemptedAssessment || cand.assessmentPercentage > 0) && !cand.hasPassedAssessment && cand.assessmentPercentage !== undefined && cand.assessmentPercentage < 75;
+                        return (
+                          <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff' }}>{cand.name}</td>
+                            <td style={{ padding: '14px 12px' }}>
+                              <div style={{ color: '#f8fafc' }}>{cand.email}</div>
+                              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Setup')}</div>
+                            </td>
+                            <td style={{ padding: '14px 12px' }}>
+                              <div style={{ color: '#f8fafc' }}>{cand.degree || (cand.isProfileCompleted ? 'B.Tech / B.E' : 'Not Set')}</div>
+                              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.branch || 'Engineering'}</div>
+                            </td>
+                            <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
+                              <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
+                                {cand.preferredStack || 'Python Full Stack'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px 12px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                {cand.isProfileCompleted ? (
+                                  <span style={{ 
+                                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%)', 
+                                    color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.35)', 
+                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.15)', whiteSpace: 'nowrap'
+                                  }}>
+                                    <CheckCircle2 size={12} style={{ color: '#34d399' }} /> Profile Completed
+                                  </span>
+                                ) : (
+                                  <span style={{ 
+                                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.08) 100%)', 
+                                    color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.35)', 
+                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)', whiteSpace: 'nowrap'
+                                  }}>
+                                    <Clock size={12} style={{ color: '#fbbf24' }} /> Profile Incomplete
+                                  </span>
+                                )}
+                                
+                                {cand.isAssessmentSubmitted || cand.hasPassedAssessment || (cand.assessmentPercentage !== undefined && cand.assessmentPercentage >= 75) ? (
+                                  <span style={{ 
+                                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(79, 70, 229, 0.08) 100%)', 
+                                    color: '#a5b4fc', border: '1px solid rgba(99, 102, 241, 0.35)', 
+                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.15)', whiteSpace: 'nowrap'
+                                  }}>
+                                    <Award size={12} style={{ color: '#a5b4fc' }} /> Test Passed ({cand.assessmentPercentage || 100}%)
+                                  </span>
+                                ) : hasFailed ? (
+                                  <span style={{ 
+                                    background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.08) 100%)', 
+                                    color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.35)', 
+                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15)', whiteSpace: 'nowrap'
+                                  }}>
+                                    <AlertCircle size={12} style={{ color: '#f87171' }} /> Test Failed ({cand.assessmentPercentage}%)
+                                  </span>
+                                ) : (
+                                  <span style={{ 
+                                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(2, 132, 199, 0.08) 100%)', 
+                                    color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', 
+                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', 
+                                    display: 'inline-flex', alignItems: 'center', gap: '5px', width: 'fit-content',
+                                    boxShadow: '0 2px 8px rgba(56, 189, 248, 0.15)', whiteSpace: 'nowrap'
+                                  }}>
+                                    <Clock size={12} style={{ color: '#38bdf8' }} /> Test Pending
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                           <td style={{ padding: '14px 12px' }}>
                             {cand.assignedMentorId ? (
                               <span style={{ color: '#10b981', fontWeight: '700' }}>{cand.assignedMentorId.name}</span>
@@ -535,7 +566,8 @@ const AdminDashboard = ({ user, onLogout }) => {
                             )}
                           </td>
                         </tr>
-                      ))}
+                      );
+                    })}
                     </tbody>
                   </table>
                 </div>
