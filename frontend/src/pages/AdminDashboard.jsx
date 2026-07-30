@@ -327,16 +327,17 @@ const AdminDashboard = ({ user, onLogout }) => {
                         <th style={{ padding: '12px' }}>Email & College</th>
                         <th style={{ padding: '12px' }}>Track</th>
                         <th style={{ padding: '12px' }}>Assigned Mentor</th>
-                        <th style={{ padding: '12px' }}>Prerequisite Status</th>
-                        <th style={{ padding: '12px' }}>Action</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap', minWidth: '170px' }}>Prerequisite Status</th>
+                        <th style={{ padding: '12px', whiteSpace: 'nowrap' }}>Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {overviewData.candidates.map((cand, idx) => {
-                        const isEligible = cand.isProfileCompleted && (cand.isAssessmentSubmitted || cand.hasPassedAssessment || cand.assessmentStatus === 'Pending Mentor Allocation' || cand.assessmentStatus === 'Mentor Allocated');
+                        const isTestDone = cand.isAssessmentSubmitted || cand.hasPassedAssessment || (cand.assessmentPercentage !== undefined && cand.assessmentPercentage >= 75);
+                        const isEligible = cand.isProfileCompleted && isTestDone;
                         return (
                           <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                            <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff' }}>{cand.name}</td>
+                            <td style={{ padding: '14px 12px', fontWeight: '700', color: '#ffffff', whiteSpace: 'nowrap' }}>{cand.name}</td>
                             <td style={{ padding: '14px 12px' }}>
                               <div style={{ color: '#f8fafc' }}>{cand.email}</div>
                               <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || (cand.isProfileCompleted ? 'College Provided' : 'Pending Profile Details')}</div>
@@ -346,7 +347,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                                 {cand.preferredStack || 'Python Full Stack'}
                               </span>
                             </td>
-                            <td style={{ padding: '14px 12px' }}>
+                            <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
                               {cand.assignedMentorId ? (
                                 <div style={{ color: '#10b981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <ShieldCheck size={16} />
@@ -356,34 +357,52 @@ const AdminDashboard = ({ user, onLogout }) => {
                                 <span style={{ color: '#f59e0b', fontSize: '0.8rem', fontWeight: '600' }}>Unallocated</span>
                               )}
                             </td>
-                            <td style={{ padding: '14px 12px' }}>
+                            <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
                               {!cand.isProfileCompleted ? (
-                                <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
-                                  Profile Incomplete
+                                <span style={{ 
+                                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.08) 100%)', 
+                                  color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.35)', 
+                                  padding: '5px 12px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: '700', 
+                                  display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
+                                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)'
+                                }}>
+                                  <Clock size={13} style={{ color: '#fbbf24' }} /> Profile Incomplete
                                 </span>
-                              ) : !cand.isAssessmentSubmitted && !cand.hasPassedAssessment ? (
-                                <span style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
-                                  Test Pending
+                              ) : !isTestDone ? (
+                                <span style={{ 
+                                  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(2, 132, 199, 0.08) 100%)', 
+                                  color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.35)', 
+                                  padding: '5px 12px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: '700', 
+                                  display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
+                                  boxShadow: '0 2px 8px rgba(56, 189, 248, 0.15)'
+                                }}>
+                                  <Clock size={13} style={{ color: '#38bdf8' }} /> Test Pending
                                 </span>
                               ) : (
-                                <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700' }}>
-                                  Ready for Allocation
+                                <span style={{ 
+                                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%)', 
+                                  color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.35)', 
+                                  padding: '5px 12px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: '700', 
+                                  display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
+                                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.15)'
+                                }}>
+                                  <CheckCircle2 size={13} style={{ color: '#34d399' }} /> Ready for Allocation
                                 </span>
                               )}
                             </td>
-                            <td style={{ padding: '14px 12px' }}>
+                            <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
                               {isEligible ? (
                                 <button 
                                   onClick={() => { setSelectedCandidate(cand); setShowAllocateModal(true); }}
                                   className="glow-btn" 
-                                  style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}
+                                  style={{ padding: '6px 14px', fontSize: '0.8rem', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', whiteSpace: 'nowrap' }}
                                 >
                                   Allocate Mentor
                                 </button>
                               ) : (
                                 <button 
                                   disabled
-                                  style={{ padding: '6px 14px', fontSize: '0.78rem', background: 'rgba(255,255,255,0.05)', color: '#64748b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'not-allowed', fontWeight: '600' }}
+                                  style={{ padding: '6px 14px', fontSize: '0.78rem', background: 'rgba(255,255,255,0.05)', color: '#64748b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'not-allowed', fontWeight: '600', whiteSpace: 'nowrap' }}
                                   title="Candidate must complete collegiate profile and test before allocation"
                                 >
                                   Prerequisites Pending
