@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Award, FileText, Download, CheckCircle, Clock, BookOpen, Star, Building, Mail, GraduationCap, CheckCircle2, MessageSquare } from 'lucide-react';
+import { X, Award, FileText, Download, Eye, CheckCircle, Clock, BookOpen, Star, Building, Mail, GraduationCap, CheckCircle2, MessageSquare } from 'lucide-react';
+import { openResumeInNewTab, downloadResumeFile, getResumeFileName } from '../utils/resumeHelper';
 
 const CandidateDetailsModal = ({ candidate, onClose, onOpenChat }) => {
   if (!candidate) return null;
@@ -137,34 +138,60 @@ const CandidateDetailsModal = ({ candidate, onClose, onOpenChat }) => {
           </div>
 
           <div>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: '#94a3b8', marginBottom: '10px' }}>Actions & Communication</h4>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <a 
-                href={candidate.resumeUrl} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', color: '#ffffff',
-                  padding: '10px 16px', borderRadius: '10px', textDecoration: 'none',
-                  fontWeight: '600', fontSize: '0.85rem'
-                }}
-              >
-                <Download size={16} />
-                <span>Resume</span>
-              </a>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: '#94a3b8', marginBottom: '10px' }}>
+              Candidate Resume / Document
+            </h4>
+            
+            {candidate.resumeUrl ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '0.825rem', color: '#cbd5e1', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FileText size={15} style={{ color: '#10b981' }} />
+                  <span>{candidate.resumeName || getResumeFileName(candidate)}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button 
+                    onClick={() => openResumeInNewTab(candidate.resumeUrl, candidate.resumeName || getResumeFileName(candidate))}
+                    className="secondary-btn"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '8px',
+                      background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', borderColor: 'rgba(99, 102, 241, 0.3)',
+                      padding: '8px 14px', borderRadius: '10px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer'
+                    }}
+                  >
+                    <Eye size={16} />
+                    <span>View Resume</span>
+                  </button>
 
-              {onOpenChat && (
-                <button
-                  onClick={() => { onClose(); onOpenChat(candidate); }}
-                  className="secondary-btn"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', fontSize: '0.85rem' }}
-                >
-                  <MessageSquare size={16} />
-                  <span>Direct Chat</span>
-                </button>
-              )}
-            </div>
+                  <button 
+                    onClick={() => downloadResumeFile(candidate.resumeUrl, `${candidate.name || 'Candidate'}_Resume.pdf`)}
+                    className="glow-btn"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '8px',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#ffffff',
+                      padding: '8px 14px', borderRadius: '10px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer'
+                    }}
+                  >
+                    <Download size={16} />
+                    <span>Download Resume</span>
+                  </button>
+
+                  {onOpenChat && (
+                    <button
+                      onClick={() => { onClose(); onOpenChat(candidate); }}
+                      className="secondary-btn"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', fontSize: '0.85rem' }}
+                    >
+                      <MessageSquare size={16} />
+                      <span>Direct Chat</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.825rem', color: '#64748b', italic: 'true' }}>
+                No resume attached by candidate.
+              </div>
+            )}
           </div>
         </div>
 

@@ -6,12 +6,14 @@ import ProfileDetails from './ProfileDetails';
 import StackSelection from './StackSelection';
 import TestScreen from './TestScreen';
 import ResultScreen from './ResultScreen';
-import CandidateChatView from '../components/CandidateChatView';
+import ChatHub from './ChatHub';
+import CandidateWorkLogView from '../components/CandidateWorkLogView';
 import { 
   ClipboardList, CheckCircle2, UserCheck, Clock, TrendingUp, 
-  Calendar, Check, X, ShieldCheck, Mail, BookOpen, Layers, Award, Send, MessageSquare, AlertCircle
+  Calendar, Check, X, ShieldCheck, Mail, BookOpen, Layers, Award, Send, MessageSquare, AlertCircle, Eye, Download, FileText
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { openResumeInNewTab, downloadResumeFile, getResumeFileName } from '../utils/resumeHelper';
 
 const CandidateDashboard = ({ onSelectStack }) => {
   const { user, logout, token } = useContext(AuthContext);
@@ -57,9 +59,58 @@ const CandidateDashboard = ({ onSelectStack }) => {
     }
   };
 
+  const getAttendanceSummaryStats = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let workingDaysCount = 0;
+    let weekendOffCount = 0;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = new Date(year, month, day);
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) { // Sunday (0) & Saturday (6) = Weekly Off / Leave
+        weekendOffCount++;
+      } else {
+        workingDaysCount++;
+      }
+    }
+
+    const currentDayOfWeek = now.getDay();
+    const isTodayWeeklyOff = currentDayOfWeek === 0 || currentDayOfWeek === 6;
+
+    const rate = workingDaysCount > 0 
+      ? Math.min(100, Math.round((attRecord.presentDays / workingDaysCount) * 100))
+      : 0;
+
+    return {
+      daysInMonth,
+      weekendOffCount,
+      workingDaysCount,
+      isTodayWeeklyOff,
+      todayDayName: currentDayOfWeek === 0 ? 'Sunday' : currentDayOfWeek === 6 ? 'Saturday' : '',
+      rate
+    };
+  };
+
   const handleAttendanceSubmit = (e) => {
     e.preventDefault();
-    const todayStr = new Date().toDateString();
+    const now = new Date();
+    const currentDayOfWeek = now.getDay();
+    if (currentDayOfWeek === 0 || currentDayOfWeek === 6) {
+      const dayName = currentDayOfWeek === 0 ? 'Sunday' : 'Saturday';
+      setPopupModal({
+        open: true,
+        title: 'Official Weekly Off',
+        message: `Today is ${dayName} (Official Weekly Off / Leave). No attendance required today!`,
+        type: 'info'
+      });
+      return;
+    }
+
+    const todayStr = now.toDateString();
     if (attRecord.lastLoggedDate === todayStr) {
       setPopupModal({
         open: true,
@@ -449,93 +500,131 @@ const CandidateDashboard = ({ onSelectStack }) => {
           )}
 
           {/* ATTENDANCE TAB */}
-          {activeTab === 'attendance' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <div>
-                <h1 style={{ fontSize: '1.85rem', fontWeight: '800', color: '#ffffff', margin: 0 }}>Daily Attendance Logger</h1>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '4px' }}>Log your daily work attendance and track monthly presence stats</p>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
-                <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#ffffff', marginBottom: '16px' }}>Submit Today's Attendance</h3>
-                  <form onSubmit={handleAttendanceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceStatus('Present')}
-                        style={{
-                          flex: 1, padding: '12px', borderRadius: '10px',
-                          border: `1px solid ${attendanceStatus === 'Present' ? '#10b981' : 'rgba(255,255,255,0.1)'}`,
-                          background: attendanceStatus === 'Present' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
-                          color: attendanceStatus === 'Present' ? '#10b981' : '#94a3b8',
-                          fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
-                        }}
-                      >
-                        <Check size={16} /> Present
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceStatus('Absent')}
-                        style={{
-                          flex: 1, padding: '12px', borderRadius: '10px',
-                          border: `1px solid ${attendanceStatus === 'Absent' ? '#ef4444' : 'rgba(255,255,255,0.1)'}`,
-                          background: attendanceStatus === 'Absent' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
-                          color: attendanceStatus === 'Absent' ? '#ef4444' : '#94a3b8',
-                          fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
-                        }}
-                      >
-                        <X size={16} /> Absent
-                      </button>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Work Mode</label>
-                      <select className="form-control" value={workMode} onChange={(e) => setWorkMode(e.target.value)}>
-                        <option value="Office">Office (On-site)</option>
-                        <option value="Remote">Remote (WFH)</option>
-                        <option value="Hybrid">Hybrid</option>
-                      </select>
-                    </div>
-
-                    <button type="submit" className="glow-btn" style={{ justifyContent: 'center' }}>
-                      <CheckCircle2 size={16} />
-                      <span>{attendanceSubmitted ? 'Attendance Confirmed!' : 'Log Attendance'}</span>
-                    </button>
-                  </form>
+          {activeTab === 'attendance' && (() => {
+            const attStats = getAttendanceSummaryStats();
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div>
+                  <h1 style={{ fontSize: '1.85rem', fontWeight: '800', color: '#ffffff', margin: 0 }}>Daily Attendance Logger</h1>
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '4px' }}>
+                    Log your daily work attendance. Saturdays & Sundays are skipped as official weekly leave days.
+                  </p>
                 </div>
 
-                <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#ffffff', marginBottom: '16px' }}>Monthly Presence Summary</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Days Present</span>
-                      <span style={{ color: '#10b981', fontWeight: '800' }}>{attRecord.presentDays} {attRecord.presentDays === 1 ? 'Day' : 'Days'}</span>
+                {attStats.isTodayWeeklyOff && (
+                  <div style={{ padding: '16px 20px', borderRadius: '16px', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ fontSize: '1.5rem' }}>🌴</div>
+                    <div>
+                      <h4 style={{ margin: 0, color: '#fbbf24', fontSize: '0.95rem', fontWeight: '800' }}>
+                        Official Weekly Off ({attStats.todayDayName})
+                      </h4>
+                      <p style={{ margin: '2px 0 0', color: '#cbd5e1', fontSize: '0.82rem' }}>
+                        Saturdays and Sundays are designated as official weekly leave days. Mandatory attendance is paused today.
+                      </p>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>On-site (Office)</span>
-                      <span style={{ color: '#818cf8', fontWeight: '800' }}>{attRecord.officeDays} {attRecord.officeDays === 1 ? 'Day' : 'Days'}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Remote (WFH)</span>
-                      <span style={{ color: '#38bdf8', fontWeight: '800' }}>{attRecord.wfhDays} {attRecord.wfhDays === 1 ? 'Day' : 'Days'}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Attendance Rate</span>
-                      <span style={{ color: '#10b981', fontWeight: '800', fontSize: '1.1rem' }}>
-                        {attRecord.presentDays > 0 ? '100%' : '0%'}
-                      </span>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+                  <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#ffffff', marginBottom: '16px' }}>Submit Today's Attendance</h3>
+                    <form onSubmit={handleAttendanceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setAttendanceStatus('Present')}
+                          disabled={attStats.isTodayWeeklyOff}
+                          style={{
+                            flex: 1, padding: '12px', borderRadius: '10px',
+                            border: `1px solid ${attendanceStatus === 'Present' ? '#10b981' : 'rgba(255,255,255,0.1)'}`,
+                            background: attendanceStatus === 'Present' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
+                            color: attendanceStatus === 'Present' ? '#10b981' : '#94a3b8',
+                            fontWeight: '600', cursor: attStats.isTodayWeeklyOff ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                          }}
+                        >
+                          <Check size={16} /> Present
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setAttendanceStatus('Absent')}
+                          disabled={attStats.isTodayWeeklyOff}
+                          style={{
+                            flex: 1, padding: '12px', borderRadius: '10px',
+                            border: `1px solid ${attendanceStatus === 'Absent' ? '#ef4444' : 'rgba(255,255,255,0.1)'}`,
+                            background: attendanceStatus === 'Absent' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                            color: attendanceStatus === 'Absent' ? '#ef4444' : '#94a3b8',
+                            fontWeight: '600', cursor: attStats.isTodayWeeklyOff ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                          }}
+                        >
+                          <X size={16} /> Absent
+                        </button>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Work Mode</label>
+                        <select className="form-control" value={workMode} onChange={(e) => setWorkMode(e.target.value)} disabled={attStats.isTodayWeeklyOff}>
+                          <option value="Office">Office (On-site)</option>
+                          <option value="Remote">Remote (WFH)</option>
+                          <option value="Hybrid">Hybrid</option>
+                        </select>
+                      </div>
+
+                      <button type="submit" className="glow-btn" disabled={attStats.isTodayWeeklyOff} style={{ justifyContent: 'center', opacity: attStats.isTodayWeeklyOff ? 0.6 : 1 }}>
+                        <CheckCircle2 size={16} />
+                        <span>
+                          {attStats.isTodayWeeklyOff ? 'Weekly Off (No Attendance)' : (attendanceSubmitted ? 'Attendance Confirmed!' : 'Log Attendance')}
+                        </span>
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#ffffff', marginBottom: '16px' }}>Monthly Presence Summary</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Days Present</span>
+                        <span style={{ color: '#10b981', fontWeight: '800' }}>{attRecord.presentDays} {attRecord.presentDays === 1 ? 'Day' : 'Days'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Weekly Off / Leave (Sat & Sun)</span>
+                        <span style={{ color: '#f59e0b', fontWeight: '800' }}>🌴 {attStats.weekendOffCount} Days</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Working Days (Mon – Fri)</span>
+                        <span style={{ color: '#a78bfa', fontWeight: '800' }}>{attStats.workingDaysCount} Days</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>On-site (Office)</span>
+                        <span style={{ color: '#818cf8', fontWeight: '800' }}>{attRecord.officeDays} {attRecord.officeDays === 1 ? 'Day' : 'Days'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Remote (WFH)</span>
+                        <span style={{ color: '#38bdf8', fontWeight: '800' }}>{attRecord.wfhDays} {attRecord.wfhDays === 1 ? 'Day' : 'Days'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Working Day Attendance Rate</span>
+                        <span style={{ color: '#10b981', fontWeight: '800', fontSize: '1.1rem' }}>
+                          {attStats.rate}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            );
+          })()}
+
+          {/* DAILY WORK LOG & TIMELINE TAB */}
+          {activeTab === 'worklog' && (
+            <CandidateWorkLogView />
           )}
 
           {/* MENTOR CHAT TAB */}
           {activeTab === 'chat' && (
-            <CandidateChatView />
+            <div style={{ height: 'calc(100vh - 68px - 48px)' }}>
+              <ChatHub />
+            </div>
           )}
         </main>
       </div>

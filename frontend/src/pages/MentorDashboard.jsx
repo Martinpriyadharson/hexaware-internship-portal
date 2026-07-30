@@ -5,8 +5,10 @@ import CandidateDetailsModal from '../components/CandidateDetailsModal';
 import AssignAssessmentModal from '../components/AssignAssessmentModal';
 import MentorProfileView from '../components/MentorProfileView';
 import ChatDrawer from '../components/ChatDrawer';
-import MentorChatHub from '../components/MentorChatHub';
+import ChatHub from './ChatHub';
+import MentorWorkLogView from '../components/MentorWorkLogView';
 import AssignTaskModal from '../components/AssignTaskModal';
+import PresenceStatusBadge from '../components/PresenceStatusBadge';
 import { 
   Users, ClipboardList, TrendingUp, Clock, Trophy, 
   Search, ArrowUpDown, ChevronLeft, ChevronRight, Send, 
@@ -406,12 +408,12 @@ const MentorDashboard = ({ user, onLogout }) => {
                             <div style={{ color: '#f8fafc', fontWeight: '500' }}>{cand.college}</div>
                             <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.degree} ({cand.department})</div>
                           </td>
-                          <td style={{ padding: '14px 12px' }}>
+                          <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
                             <span style={{ 
-                              background: 'rgba(129, 140, 248, 0.1)', color: '#a78bfa', 
+                              background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', 
                               border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', 
                               borderRadius: '8px', fontSize: '0.78rem', fontWeight: '600',
-                              whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center'
+                              whiteSpace: 'nowrap', display: 'inline-block'
                             }}>
                               {cand.preferredStack || 'Full Stack'}
                             </span>
@@ -532,7 +534,17 @@ const MentorDashboard = ({ user, onLogout }) => {
               </div>
             </div>
           )}
+          {/* Work Logs & Timeline Tab */}
+          {activeTab === 'timeline' && (
+            <MentorWorkLogView />
+          )}
 
+          {/* Chat Hub Tab */}
+          {activeTab === 'chat' && (
+            <div style={{ height: 'calc(100vh - 68px - 48px)' }}>
+              <ChatHub />
+            </div>
+          )}
 
         </main>
       </div>
@@ -574,13 +586,35 @@ const MentorDashboard = ({ user, onLogout }) => {
         />
       )}
 
-      {/* Render MentorChatHub Modal */}
-      <MentorChatHub 
-        isOpen={showChatHub} 
-        onClose={() => { setShowChatHub(false); setChatHubCandidateId(null); }}
-        initialCandidateId={chatHubCandidateId}
-        candidates={candidatesList}
-      />
+      {/* Render ChatHub Modal when launcher button clicked */}
+      {showChatHub && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '1200px', height: '90vh',
+            background: '#0a0c1a', borderRadius: '24px', overflow: 'hidden',
+            position: 'relative', border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
+          }}>
+            <button 
+              onClick={() => { setShowChatHub(false); setChatHubCandidateId(null); }}
+              style={{
+                position: 'absolute', top: '16px', right: '16px', zIndex: 10000,
+                background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff',
+                borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 'bold'
+              }}
+            >
+              ✕
+            </button>
+            <ChatHub />
+          </div>
+        </div>
+      )}
 
       {/* Render AssignTaskModal */}
       {showAssignTaskModal && (

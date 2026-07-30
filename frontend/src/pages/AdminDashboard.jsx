@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import TopNavigation from '../components/TopNavigation';
 import NotificationDrawer from '../components/NotificationDrawer';
+import CandidateDetailsModal from '../components/CandidateDetailsModal';
+import ChatHub from './ChatHub';
 import { 
   Users, ClipboardList, UserCheck, Clock, CheckCircle2, 
-  TrendingUp, Search, Plus, Eye, Award, Building, FileText, ChevronRight, ShieldCheck, Mail, LogOut, Copy, Download, AlertCircle
+  TrendingUp, Search, Plus, Eye, Award, Building, FileText, ChevronRight, ShieldCheck, Mail, LogOut, Copy, Download, AlertCircle, User
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { openResumeInNewTab, downloadResumeFile, getResumeFileName } from '../utils/resumeHelper';
 
 const AdminDashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -14,6 +17,7 @@ const AdminDashboard = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [provisionedMentorCredentials, setProvisionedMentorCredentials] = useState(null);
   const [copiedCredentials, setCopiedCredentials] = useState(false);
+  const [viewingProfileCandidate, setViewingProfileCandidate] = useState(null);
   const [popupModal, setPopupModal] = useState({ open: false, title: '', message: '', type: 'info' });
   const [overviewData, setOverviewData] = useState({
     summary: {
@@ -258,28 +262,8 @@ const AdminDashboard = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              {/* Main Charts & Table Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
-                {/* Candidates Trend Line Chart */}
-                <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#ffffff', margin: 0 }}>Candidates Trend</h3>
-                    <span style={{ fontSize: '0.78rem', color: '#94a3b8', background: 'rgba(255,255,255,0.04)', padding: '4px 10px', borderRadius: '8px' }}>Last 30 Days</span>
-                  </div>
-                  <div style={{ width: '100%', height: '220px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={overviewData.candidatesTrend}>
-                        <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                        <YAxis stroke="#64748b" fontSize={12} />
-                        <Tooltip contentStyle={{ background: '#0a0b16', borderColor: 'rgba(255,255,255,0.1)', color: '#fff' }} />
-                        <Line type="monotone" dataKey="count" stroke="#a78bfa" strokeWidth={3} dot={{ fill: '#a78bfa', r: 5 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* Pending Allocation Roster Card */}
-                <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
+              {/* Pending Allocation Roster Card */}
+              <div className="glass-card" style={{ padding: '24px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#ffffff', margin: 0 }}>Pending Allocation Roster</h3>
                     <button onClick={() => setActiveTab('mentors')} style={{ background: 'none', border: 'none', color: '#818cf8', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -316,8 +300,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* MENTORS TAB */}
           {activeTab === 'mentors' && (
@@ -354,8 +337,8 @@ const AdminDashboard = ({ user, onLogout }) => {
                             <div style={{ color: '#f8fafc' }}>{cand.email}</div>
                             <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.college || 'Anna University'}</div>
                           </td>
-                          <td style={{ padding: '14px 12px' }}>
-                            <span style={{ background: 'rgba(129, 140, 248, 0.1)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.2)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600' }}>
+                          <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
+                            <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
                               {cand.preferredStack || 'Python Full Stack'}
                             </span>
                           </td>
@@ -405,6 +388,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                         <th style={{ padding: '12px' }}>Degree & Branch</th>
                         <th style={{ padding: '12px' }}>Preferred Track</th>
                         <th style={{ padding: '12px' }}>Assigned Mentor</th>
+                        <th style={{ padding: '12px' }}>Resume / Document</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -419,8 +403,8 @@ const AdminDashboard = ({ user, onLogout }) => {
                             <div style={{ color: '#f8fafc' }}>{cand.degree || 'B.Tech'}</div>
                             <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{cand.branch || 'Engineering'}</div>
                           </td>
-                          <td style={{ padding: '14px 12px' }}>
-                            <span style={{ background: 'rgba(129, 140, 248, 0.1)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.2)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600' }}>
+                          <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }}>
+                            <span style={{ background: 'rgba(129, 140, 248, 0.12)', color: '#a78bfa', border: '1px solid rgba(129, 140, 248, 0.25)', padding: '5px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
                               {cand.preferredStack || 'Python Full Stack'}
                             </span>
                           </td>
@@ -429,6 +413,28 @@ const AdminDashboard = ({ user, onLogout }) => {
                               <span style={{ color: '#10b981', fontWeight: '700' }}>{cand.assignedMentorId.name}</span>
                             ) : (
                               <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>Unallocated</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '14px 12px' }}>
+                            {cand.resumeUrl ? (
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                <button 
+                                  onClick={() => openResumeInNewTab(cand.resumeUrl, cand.resumeName || getResumeFileName(cand))}
+                                  title="View Resume in New Tab"
+                                  style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '600' }}
+                                >
+                                  <Eye size={13} /> View
+                                </button>
+                                <button 
+                                  onClick={() => downloadResumeFile(cand.resumeUrl, `${cand.name || 'Candidate'}_Resume.pdf`)}
+                                  title="Download Resume PDF"
+                                  style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: '600' }}
+                                >
+                                  <Download size={13} /> Download
+                                </button>
+                              </div>
+                            ) : (
+                              <span style={{ color: '#64748b', fontSize: '0.78rem' }}>No Document</span>
                             )}
                           </td>
                         </tr>
@@ -469,6 +475,13 @@ const AdminDashboard = ({ user, onLogout }) => {
               </div>
             </div>
           )}
+
+          {/* Chat Hub Tab */}
+          {activeTab === 'chat' && (
+            <div style={{ height: 'calc(100vh - 68px - 48px)' }}>
+              <ChatHub />
+            </div>
+          )}
         </main>
       </div>
 
@@ -493,30 +506,60 @@ const AdminDashboard = ({ user, onLogout }) => {
                   Submitted Report for Admin Validation & Mentor Allocation
                 </div>
               </div>
-              <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 12px', borderRadius: '12px', fontWeight: '700' }}>
-                Report Verified
+              <span style={{
+                fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981',
+                border: '1px solid rgba(16, 185, 129, 0.3)', padding: '6px 14px', borderRadius: '20px',
+                fontWeight: '700', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '6px',
+                flexShrink: 0
+              }}>
+                <CheckCircle2 size={13} style={{ color: '#10b981' }} />
+                <span>Report Verified</span>
               </span>
             </div>
 
             {/* Candidate & Test Summary Box */}
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px' }}>
                 <div>
                   <div style={{ fontWeight: '800', color: '#ffffff', fontSize: '1.05rem' }}>{selectedCandidate.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#818cf8' }}>{selectedCandidate.email}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#818cf8', marginTop: '2px' }}>{selectedCandidate.email}</div>
                 </div>
-                <a 
-                  href={selectedCandidate.resumeUrl || '#'} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  style={{
-                    fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8',
-                    border: '1px solid rgba(99, 102, 241, 0.3)', padding: '6px 12px', borderRadius: '8px',
-                    textDecoration: 'none', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px'
-                  }}
-                >
-                  <Download size={14} /> Resume
-                </a>
+
+                {selectedCandidate.resumeUrl && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <div style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <FileText size={13} style={{ color: '#10b981' }} />
+                      <span>{selectedCandidate.resumeName || getResumeFileName(selectedCandidate)}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                      <button 
+                        type="button"
+                        onClick={() => openResumeInNewTab(selectedCandidate.resumeUrl, selectedCandidate.resumeName || getResumeFileName(selectedCandidate))}
+                        className="secondary-btn"
+                        style={{
+                          fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8',
+                          border: '1px solid rgba(99, 102, 241, 0.3)', padding: '4px 10px', borderRadius: '8px',
+                          cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px'
+                        }}
+                      >
+                        <Eye size={12} /> View
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => downloadResumeFile(selectedCandidate.resumeUrl, `${selectedCandidate.name || 'Candidate'}_Resume.pdf`)}
+                        className="glow-btn"
+                        style={{
+                          fontSize: '0.75rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#ffffff',
+                          padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600',
+                          display: 'flex', alignItems: 'center', gap: '4px'
+                        }}
+                      >
+                        <Download size={12} /> Download
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.8rem', color: '#94a3b8' }}>
@@ -763,6 +806,14 @@ const AdminDashboard = ({ user, onLogout }) => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Candidate Details Modal for Admin */}
+      {viewingProfileCandidate && (
+        <CandidateDetailsModal 
+          candidate={viewingProfileCandidate} 
+          onClose={() => setViewingProfileCandidate(null)} 
+        />
       )}
     </div>
   );

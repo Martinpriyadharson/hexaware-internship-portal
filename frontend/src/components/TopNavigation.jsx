@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import DateRangePicker from './DateRangePicker';
 import NotificationDrawer from './NotificationDrawer';
 import AccountSecurityModal from './AccountSecurityModal';
 import HelpCenterModal from './HelpCenterModal';
-import { 
-  Bell, ChevronDown, Menu, User, Settings, Lock, HelpCircle, LogOut 
+import PresenceStatusBadge from './PresenceStatusBadge';
+import PresenceSelectorModal from './PresenceSelectorModal';
+import {
+  Bell, ChevronDown, Menu, User, Settings, Lock, HelpCircle, LogOut, Radio
 } from 'lucide-react';
 
 const TopNavigation = ({ 
@@ -19,15 +22,63 @@ const TopNavigation = ({
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showPresenceModal, setShowPresenceModal] = useState(false);
+  const [currentPresence, setCurrentPresence] = useState('Available');
+  const [customStatusMsg, setCustomStatusMsg] = useState('');
   const [unreadCount, setUnreadCount] = useState(2);
   const [profileData, setProfileData] = useState(null);
 
+  const handleUpdatePresence = async (status, msg) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/presence/status', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ currentStatus: status, customStatus: msg })
+      });
+      if (res.ok) {
+        setCurrentPresence(status);
+        setCustomStatusMsg(msg);
+      }
+    } catch (err) {}
+  };
+
   useEffect(() => {
+    if (user) {
+      fetchCurrentPresence();
+    }
     if (user?.role === 'Mentor' || user?.role === 'Admin') {
       fetchNotifications();
       fetchProfile();
     }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const socket = io('http://localhost:5000', { auth: { token } });
+    socket.on('notification:new', () => {
+      setUnreadCount(prev => prev + 1);
+    });
+    return () => socket.disconnect();
   }, [user]);
+
+  const fetchCurrentPresence = async () => {
+    const token = localStorage.getItem('token');
+    const uid = user?._id || user?.id;
+    if (!token || !uid) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/presence/user/${uid}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.currentStatus) setCurrentPresence(data.currentStatus);
+        if (data.customStatus)  setCustomStatusMsg(data.customStatus);
+      }
+    } catch (err) {}
+  };
 
   const fetchNotifications = async () => {
     const token = localStorage.getItem('token');
@@ -127,19 +178,27 @@ const TopNavigation = ({
                 borderLeft: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer'
               }}
             >
-              <div style={{
-                width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1 0%, #a78bfa 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '800', fontSize: '0.85rem'
-              }}>
-                {user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2) : 'AD'}
+              <div style={{ position: 'relative' }}>
+                <div style={{
+                  width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1 0%, #a78bfa 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '800', fontSize: '0.85rem'
+                }}>
+                  {user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2) : 'AD'}
+                </div>
+                {/* Presence dot on avatar */}
+                <div style={{ position: 'absolute', bottom: '0px', right: '0px' }}>
+                  <PresenceStatusBadge status={currentPresence} size={10} />
+                </div>
               </div>
               <div style={{ fontSize: '0.85rem' }}>
                 <div style={{ color: '#f8fafc', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span>{user?.name || 'Hexaware Admin'}</span>
                   <ChevronDown size={14} style={{ color: '#94a3b8' }} />
                 </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-                  {user?.role === 'Admin' ? 'System Administrator' : (profileData?.designation || (user?.role === 'Mentor' ? 'Senior Evaluator' : 'Intern Candidate'))}
+                <div style={{ color: '#94a3b8', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: currentPresence === 'Available' ? '#10b981' : currentPresence === 'Busy' || currentPresence === 'DND' ? '#ef4444' : currentPresence === 'BRB' || currentPresence === 'Appear Away' ? '#f59e0b' : '#64748b', fontWeight: '600' }}>
+                    {currentPresence}{customStatusMsg ? ` · ${customStatusMsg}` : ''}
+                  </span>
                 </div>
               </div>
             </div>
@@ -205,6 +264,25 @@ const TopNavigation = ({
                   <span>Help Center</span>
                 </button>
 
+                {/* Set Presence Status */}
+                <button
+                  onClick={() => {
+                    setShowPresenceModal(true);
+                    setShowProfileDropdown(false);
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                    padding: '10px 12px', borderRadius: '8px', border: 'none', background: 'transparent',
+                    color: '#f8fafc', fontSize: '0.85rem', fontWeight: '500', cursor: 'pointer', textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Radio size={16} style={{ color: '#10b981' }} />
+                  <span>Set Status</span>
+                  <PresenceStatusBadge status={currentPresence} size={8} />
+                </button>
+
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '6px 0' }} />
 
                 <button
@@ -245,6 +323,16 @@ const TopNavigation = ({
         isOpen={showHelpModal} 
         onClose={() => setShowHelpModal(false)} 
       />
+
+      {/* Presence / Availability Status Selector */}
+      {showPresenceModal && (
+        <PresenceSelectorModal
+          currentStatus={currentPresence}
+          customStatus={customStatusMsg}
+          onClose={() => setShowPresenceModal(false)}
+          onUpdateStatus={handleUpdatePresence}
+        />
+      )}
     </>
   );
 };

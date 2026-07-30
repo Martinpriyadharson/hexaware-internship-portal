@@ -8,6 +8,40 @@ const Report = require('../models/Report');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
 
+const getStackSkills = (stack, customSkills) => {
+  if (Array.isArray(customSkills) && customSkills.length > 0) return customSkills;
+  if (typeof customSkills === 'string' && customSkills.trim()) {
+    return customSkills.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  const stackMap = {
+    'MERN Stack': ['React', 'Node.js', 'MongoDB', 'Express.js'],
+    'MEAN Stack': ['Angular', 'Node.js', 'MongoDB', 'Express.js'],
+    'Java Full Stack': ['Java', 'Spring Boot', 'Hibernate', 'SQL'],
+    'Python Full Stack': ['Python', 'Django', 'FastAPI', 'PostgreSQL'],
+    '.NET Full Stack': ['C#', '.NET Core', 'ASP.NET', 'SQL Server'],
+    'Frontend Development': ['HTML5', 'CSS3', 'JavaScript', 'React'],
+    'Backend Development': ['Node.js', 'Express', 'Databases', 'REST APIs'],
+    'Full Stack Development': ['JavaScript', 'Node.js', 'React', 'MongoDB'],
+    'Mobile App Development': ['React Native', 'Flutter', 'iOS/Android'],
+    'AI/ML': ['Python', 'TensorFlow', 'PyTorch', 'Scikit-Learn'],
+    'Generative AI (GenAI)': ['Python', 'LLMs', 'LangChain', 'OpenAI'],
+    'Data Science': ['Python', 'Pandas', 'NumPy', 'Machine Learning'],
+    'Data Analytics': ['SQL', 'Tableau', 'Power BI', 'Pandas'],
+    'Data Engineering': ['Apache Spark', 'Hadoop', 'SQL', 'ETL'],
+    'Computer Vision': ['OpenCV', 'PyTorch', 'CNNs', 'Python'],
+    'Natural Language Processing (NLP)': ['NLTK', 'BERT', 'Transformers', 'Python'],
+    'MLOps': ['Docker', 'Kubernetes', 'MLflow', 'CI/CD'],
+    'Cloud Computing': ['AWS', 'Azure', 'Cloud Architecture', 'IAM'],
+    'DevOps': ['Docker', 'Kubernetes', 'Jenkins', 'Terraform'],
+    'Cybersecurity': ['Network Security', 'Penetration Testing', 'Cryptography'],
+    'UI/UX Design': ['Figma', 'Wireframing', 'User Research', 'Prototyping'],
+    'Manual Testing': ['Test Cases', 'STLC', 'Jira', 'Bug Tracking']
+  };
+
+  return stackMap[stack] || ['React', 'Node.js', 'MongoDB'];
+};
+
 // @route   GET /api/mentor/dashboard
 // @desc    Get dashboard metrics, donut charts, and recent activity (supports date range query: ?start=YYYY-MM-DD&end=YYYY-MM-DD)
 exports.getDashboardData = async (req, res) => {
@@ -183,7 +217,7 @@ exports.getCandidates = async (req, res) => {
         degree: cand.degree || 'B.Tech',
         preferredStack: cand.preferredStack || 'Full Stack',
         cgpa: cand.cgpa || '8.5',
-        skills: extra && extra.skills && extra.skills.length ? extra.skills : ['React', 'Node.js', 'MongoDB'],
+        skills: getStackSkills(cand.preferredStack, cand.skills || (extra ? extra.skills : null)),
         resumeUrl: cand.resumeUrl || (extra ? extra.resumeUrl : 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'),
         remarks: extra ? extra.remarks : '',
         averageScore: avgScore || 82,

@@ -3,6 +3,7 @@ const AssessmentResult = require('../models/AssessmentResult');
 const Mentor = require('../models/Mentor');
 const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
+const { logSecurityEvent } = require('../middleware/auditLogger');
 
 // @route   GET /api/admin/overview
 // @desc    Get global portal statistics, trend data, candidate list & mentor list
@@ -112,6 +113,19 @@ exports.allocateMentor = async (req, res) => {
       .select('-password')
       .populate('assignedMentorId', 'name email designation department');
 
+    logSecurityEvent({
+      eventType: 'MENTOR_ALLOCATED',
+      userId: req.user.id,
+      userRole: req.user.role || 'Admin',
+      details: {
+        candidateId: candidate._id,
+        candidateName: candidate.name,
+        mentorId: mentor._id,
+        mentorName: mentor.name
+      },
+      ip: req.ip
+    });
+
     res.json({
       msg: `Successfully allocated mentor ${mentor.name} to candidate ${candidate.name}`,
       candidate: updatedCandidate
@@ -157,6 +171,19 @@ exports.createMentor = async (req, res) => {
     });
 
     await mentorProfile.save();
+
+    logSecurityEvent({
+      eventType: 'MENTOR_CREATED',
+      userId: req.user.id,
+      userRole: req.user.role || 'Admin',
+      details: {
+        mentorId: user._id,
+        name: user.name,
+        email: user.email,
+        department
+      },
+      ip: req.ip
+    });
 
     res.json({
       msg: `Official Mentor account for ${name} created successfully!`,

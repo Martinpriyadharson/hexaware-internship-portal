@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const { testSubmitLimiter } = require('../middleware/rateLimiters');
+const { logSecurityEvent } = require('../middleware/auditLogger');
 const Question = require('../models/Question');
 const Attempt = require('../models/Attempt');
 const User = require('../models/User');
@@ -104,7 +106,7 @@ router.get('/questions/:stack', auth, async (req, res) => {
 // @route   POST api/test/submit
 // @desc    Submit test answers, score them, and record the attempt
 // @access  Private
-router.post('/submit', auth, async (req, res) => {
+router.post('/submit', auth, testSubmitLimiter, async (req, res) => {
   const { stack, answers } = req.body; // answers is an array of { questionId, answerIndex }
 
   try {
@@ -166,6 +168,14 @@ router.post('/submit', auth, async (req, res) => {
     user.assessmentStatus = passed ? 'Passed - Pending Submission' : 'Not Shortlisted';
     user.preferredStack = stack;
     await user.save();
+
+    logSecurityEvent({
+      eventType: 'ASSESSMENT_SUBMISSION',
+      userId: user._id,
+      userRole: user.role || 'Candidate',
+      details: { stack, score, percentage, passed },
+      ip: req.ip
+    });
 
     res.json({
       attemptId: attempt._id,

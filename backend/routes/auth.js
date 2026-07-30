@@ -3,12 +3,16 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
+const { authLimiter } = require('../middleware/rateLimiters');
+const { validateRegistration, validateLogin, validateProfileUpdate } = require('../middleware/validators');
+const { validateResumeUpload } = require('../middleware/validateResume');
+const { logSecurityEvent } = require('../middleware/auditLogger');
 const User = require('../models/User');
 
 // @route   POST api/auth/register
 // @desc    Register user
 // @access  Public
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, validateRegistration, async (req, res) => {
   const { name, email, password, role } = req.body;
 
   try {
@@ -70,11 +74,11 @@ router.post('/register', async (req, res) => {
 // @route   POST api/auth/login
 // @desc    Authenticate user & get token
 // @access  Public
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
+router.post('/login', authLimiter, validateLogin, async (req, res) => {
   try {
-    let user = await User.findOne({ email });
+    const { email, password } = req.body;
+    const cleanEmail = email ? email.trim() : '';
+    let user = await User.findOne({ email: { $regex: new RegExp('^' + cleanEmail + '$', 'i') } });
 
     if (!user) {
       return res.status(400).json({ msg: 'Invalid Credentials' });
@@ -99,6 +103,15 @@ router.post('/login', async (req, res) => {
       { expiresIn: 360000 },
       (err, token) => {
         if (err) throw err;
+
+        logSecurityEvent({
+          eventType: 'USER_LOGIN',
+          userId: user.id,
+          userRole: user.role || 'Candidate',
+          details: { email: user.email, name: user.name },
+          ip: req.ip
+        });
+
         res.json({
           token,
           user: {
@@ -139,10 +152,10 @@ router.get('/me', auth, async (req, res) => {
 // @route   PUT api/auth/profile
 // @desc    Complete user profile details
 // @access  Private
-router.put('/profile', auth, async (req, res) => {
+router.put('/profile', auth, validateProfileUpdate, async (req, res) => {
   const { 
     college, university, degree, branch, currentYear, graduationYear, 
-    cgpa, dob, gender, mobile, city, state, country, isDeclarationConfirmed, preferredStack, isProfileCompleted, resumeUrl,
+    cgpa, dob, gender, mobile, city, state, country, isDeclarationConfirmed, preferredStack, isProfileCompleted, resumeUrl, resumeName,
     linkedinUrl, githubUrl, skills, certifications, preferredLocation, activeBacklogs, emergencyContact, languagesKnown, internshipDuration
   } = req.body;
 
@@ -169,6 +182,7 @@ router.put('/profile', auth, async (req, res) => {
     user.preferredStack = preferredStack !== undefined ? preferredStack : user.preferredStack;
     user.internshipDuration = internshipDuration !== undefined ? internshipDuration : user.internshipDuration;
     user.resumeUrl = resumeUrl !== undefined ? resumeUrl : user.resumeUrl;
+    user.resumeName = resumeName !== undefined ? resumeName : user.resumeName;
     user.linkedinUrl = linkedinUrl !== undefined ? linkedinUrl : user.linkedinUrl;
     user.githubUrl = githubUrl !== undefined ? githubUrl : user.githubUrl;
     user.skills = skills !== undefined ? skills : user.skills;
@@ -200,27 +214,29 @@ router.put('/profile', auth, async (req, res) => {
 
     await user.save();
 
-    res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      isProfileCompleted: user.isProfileCompleted,
-      college: user.college,
-      university: user.university,
-      degree: user.degree,
-      branch: user.branch,
-      currentYear: user.currentYear,
-      graduationYear: user.graduationYear,
-      cgpa: user.cgpa,
-      dob: user.dob,
-      gender: user.gender,
-      mobile: user.mobile,
-      city: user.city,
-      state: user.state,
-      country: user.country,
-      isDeclarationConfirmed: user.isDeclarationConfirmed,
-      preferredStack: user.preferredStack,
+    const updatedUser = await User.findById(user._id)
+      .select('-password')
+      .populate('assignedMentorId', 'name email designation department')
+      .lean();
+
+    if (updatedUser) {
+      updatedUser.id = updatedUser._id.toString();
+    }
+
+    logSecurityEvent({
+      eventType: resumeUrl ? 'RESUME_UPLOAD' : 'PROFILE_UPDATE',
+      userId: user._id,
+      userRole: user.role || 'Candidate',
+      details: {
+        college: user.college,
+        degree: user.degree,
+        branch: user.branch,
+        hasResume: Boolean(user.resumeUrl)
+      },
+      ip: req.ip
     });
+
+    res.json(updatedUser);
   } catch (err) {
     console.error('Error updating profile:', err.message);
     res.status(500).json({ msg: 'Server error updating profile' });
@@ -230,7 +246,7 @@ router.put('/profile', auth, async (req, res) => {
 // @route   PUT /api/auth/change-password
 // @desc    Change logged in user password
 // @access  Private
-router.put('/change-password', auth, async (req, res) => {
+router.put('/change-password', auth, authLimiter, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   try {
     if (!currentPassword || !newPassword) {

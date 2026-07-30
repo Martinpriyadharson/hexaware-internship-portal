@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { io } from 'socket.io-client';
 import { 
   X, Send, User, MessageSquare, Clock, Paperclip, 
   Trash2, Edit2, Smile, FileText, Download, Check, Ban, AlertTriangle,
-  Image, File, ShieldCheck
+  Image, File, ShieldCheck, Mic, Square, Play, Pause, Code, Pin, Star,
+  Search, Reply, CheckCheck, UploadCloud
 } from 'lucide-react';
+import PresenceStatusBadge from './PresenceStatusBadge';
+
+let socket = null;
 
 const ChatDrawer = ({ recipient, onClose }) => {
   const { user, token } = useContext(AuthContext);
@@ -13,30 +18,89 @@ const ChatDrawer = ({ recipient, onClose }) => {
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [attachmentName, setAttachmentName] = useState('');
   const [attachmentType, setAttachmentType] = useState('');
-  const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [editingMsgId, setEditingMsgId] = useState(null);
-  const [editingText, setEditingText] = useState('');
-  const [deleteModalMsgId, setDeleteModalMsgId] = useState(null);
-  const [activeHoverMsgId, setActiveHoverMsgId] = useState(null);
+  const [attachmentSize, setAttachmentSize] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Advanced Enterprise Chat Features
+  const [replyToMsg, setReplyToMsg] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUser, setTypingUser] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [codeModal, setCodeModal] = useState(false);
+  const [codeSnippet, setCodeSnippet] = useState('');
+  const [codeLanguage, setCodeLanguage] = useState('javascript');
+  
+  // Voice Recording State
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioUrl, setAudioUrl] = useState('');
+  const [isPlayingAudioId, setIsPlayingAudioId] = useState(null);
+
+  // Presence State
+  const [recipientPresence, setRecipientPresence] = useState({ currentStatus: 'Available', customStatus: '', isOnline: true });
 
   const messagesEndRef = useRef(null);
-  const docFileRef = useRef(null);
-  const imageFileRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
 
   useEffect(() => {
     if (!recipient) return;
+
+    // Initialize Socket.IO connection
+    socket = io('http://localhost:5000', {
+      auth: { token }
+    });
+
     fetchMessages();
+    fetchRecipientPresence();
 
-    const interval = setInterval(() => {
-      fetchMessages();
-    }, 3000);
+    // Listen for incoming messages
+    socket.on('message:received', (incomingMsg) => {
+      if (incomingMsg.senderId === recipient._id || incomingMsg.senderId === recipient.id) {
+        setMessages(prev => [...prev, incomingMsg]);
+      }
+    });
 
-    return () => clearInterval(interval);
+    // Listen for typing events
+    socket.on('presence:typing', ({ senderId, isTyping: typingFlag }) => {
+      if (senderId === recipient._id || senderId === recipient.id) {
+        setIsTyping(typingFlag);
+        setTypingUser(recipient.name);
+      }
+    });
+
+    // Listen for presence updates
+    socket.on('presence:update', (presenceData) => {
+      if (presenceData.userId === recipient._id || presenceData.userId === recipient.id) {
+        setRecipientPresence(presenceData);
+      }
+    });
+
+    return () => {
+      if (socket) socket.disconnect();
+    };
   }, [recipient]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const fetchRecipientPresence = async () => {
+    try {
+      const recipientId = recipient._id || recipient.id;
+      const res = await fetch(`http://localhost:5000/api/presence/user/${recipientId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRecipientPresence(data);
+      }
+    } catch (err) {}
+  };
 
   const fetchMessages = async () => {
     try {
@@ -53,35 +117,109 @@ const ChatDrawer = ({ recipient, onClose }) => {
     }
   };
 
-  const handleFileSelected = (e, type) => {
-    const file = e.target.files[0];
+  // Typing event emitter
+  const handleInputChange = (e) => {
+    setNewMsg(e.target.value);
+    if (socket && recipient) {
+      const recipientId = recipient._id || recipient.id;
+      socket.emit('presence:typing', { recipientId, isTyping: e.target.value.length > 0 });
+    }
+  };
+
+  // Drag & Drop File Upload Handler
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer ? e.dataTransfer.files[0] : e.target.files[0];
     if (!file) return;
+
+    if (file.size > 25 * 1024 * 1024) {
+      alert('File size exceeds maximum 25MB limit.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(30);
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      setAttachmentUrl(event.target.result);
-      setAttachmentName(file.name);
-      setAttachmentType(type);
-      setShowAttachMenu(false);
+      setUploadProgress(100);
+      setTimeout(() => {
+        setAttachmentUrl(event.target.result);
+        setAttachmentName(file.name);
+        setAttachmentType(file.type.startsWith('image/') ? 'image' : 'document');
+        setAttachmentSize(file.size);
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 300);
     };
     reader.readAsDataURL(file);
   };
 
+  // Voice Recording Handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } catch (err) {
+      alert('Microphone access is required for voice messaging.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      clearInterval(recordingTimerRef.current);
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if ((!newMsg.trim() && !attachmentUrl.trim()) || !recipient) return;
+    if ((!newMsg.trim() && !attachmentUrl && !audioUrl && !codeSnippet) || !recipient) return;
 
     const recipientId = recipient._id || recipient.id;
-    const textToSend = newMsg.trim();
-    const urlToSend = attachmentUrl.trim();
-    const nameToSend = attachmentName.trim() || 'Attached File';
-    const typeToSend = attachmentType || 'document';
+    const payload = {
+      recipientId,
+      text: newMsg.trim(),
+      attachmentUrl,
+      attachmentName,
+      attachmentType,
+      attachmentSize,
+      audioUrl,
+      audioDuration: recordingTime,
+      codeSnippet,
+      codeLanguage,
+      replyToId: replyToMsg ? replyToMsg._id : null
+    };
 
     setNewMsg('');
     setAttachmentUrl('');
     setAttachmentName('');
-    setAttachmentType('');
-    setShowAttachMenu(false);
+    setAudioUrl('');
+    setAudioBlob(null);
+    setCodeSnippet('');
+    setCodeModal(false);
+    setReplyToMsg(null);
 
     try {
       const res = await fetch('http://localhost:5000/api/messages/send', {
@@ -90,433 +228,199 @@ const ChatDrawer = ({ recipient, onClose }) => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          recipientId,
-          text: textToSend,
-          attachmentUrl: urlToSend,
-          attachmentName: nameToSend,
-          attachmentType: typeToSend
-        })
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
-        const savedMsg = await res.json();
-        setMessages(prev => [...prev, savedMsg]);
+        const sentMsg = await res.json();
+        setMessages(prev => [...prev, sentMsg]);
       }
     } catch (err) {
       console.error('Error sending message:', err);
     }
   };
 
-  const handleEditSubmit = async (msgId) => {
-    if (!editingText.trim()) return;
+  const togglePin = async (msgId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/edit`, {
+      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/pin`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ text: editingText.trim() })
-      });
-
-      if (res.ok) {
-        const updatedMsg = await res.json();
-        setMessages(prev => prev.map(m => m._id === msgId ? updatedMsg : m));
-        setEditingMsgId(null);
-        setEditingText('');
-      }
-    } catch (err) {
-      console.error('Error editing message:', err);
-    }
-  };
-
-  const confirmDeleteMessage = async () => {
-    if (!deleteModalMsgId) return;
-    const msgId = deleteModalMsgId;
-    setDeleteModalMsgId(null);
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}`, {
-        method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
       if (res.ok) {
-        const deletedMsg = await res.json();
-        setMessages(prev => prev.map(m => m._id === msgId ? deletedMsg : m));
+        const updated = await res.json();
+        setMessages(prev => prev.map(m => m._id === msgId ? updated : m));
       }
-    } catch (err) {
-      console.error('Error deleting message:', err);
-    }
+    } catch (err) {}
   };
 
-  const handleReactMessage = async (msgId, emoji) => {
+  const toggleStar = async (msgId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/react`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ emoji })
+      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/star`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
       if (res.ok) {
-        const updatedMsg = await res.json();
-        setMessages(prev => prev.map(m => m._id === msgId ? updatedMsg : m));
+        const updated = await res.json();
+        setMessages(prev => prev.map(m => m._id === msgId ? updated : m));
       }
-    } catch (err) {
-      console.error('Error reacting to message:', err);
-    }
+    } catch (err) {}
   };
+
+  const filteredMessages = messages.filter(m => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (m.text && m.text.toLowerCase().includes(q)) || 
+           (m.attachmentName && m.attachmentName.toLowerCase().includes(q)) ||
+           (m.codeSnippet && m.codeSnippet.toLowerCase().includes(q));
+  });
 
   if (!recipient) return null;
 
   return (
-    <div style={{
-      position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999,
-      width: '420px', height: '580px', maxHeight: 'calc(100vh - 40px)', background: '#0a0c1a',
-      border: '1px solid rgba(99, 102, 241, 0.35)', borderRadius: '24px',
-      boxShadow: '0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(99, 102, 241, 0.25)',
-      display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      backdropFilter: 'blur(16px)'
-    }}>
-      {/* Hidden Native File Explorer Inputs */}
-      <input 
-        type="file" 
-        ref={docFileRef} 
-        style={{ display: 'none' }} 
-        accept=".pdf,.doc,.docx,.txt,.zip,.rar,.ppt,.pptx,.xls,.xlsx,.csv" 
-        onChange={(e) => handleFileSelected(e, 'document')}
-      />
-      <input 
-        type="file" 
-        ref={imageFileRef} 
-        style={{ display: 'none' }} 
-        accept="image/*,video/*" 
-        onChange={(e) => handleFileSelected(e, 'image')}
-      />
-
+    <div 
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleFileDrop}
+      style={{
+        position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999,
+        width: '440px', height: '620px', maxHeight: 'calc(100vh - 40px)', background: '#0a0c1a',
+        border: '1px solid rgba(99, 102, 241, 0.35)', borderRadius: '24px',
+        boxShadow: '0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(99, 102, 241, 0.25)',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        backdropFilter: 'blur(16px)'
+      }}
+    >
       {/* Header */}
       <div style={{
-        padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        padding: '14px 18px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(15, 17, 32, 0.98) 100%)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        flexShrink: 0
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ position: 'relative' }}>
             <div style={{
-              width: '40px', height: '40px', borderRadius: '50%',
+              width: '42px', height: '42px', borderRadius: '50%',
               background: 'linear-gradient(135deg, #6366f1 0%, #a78bfa 100%)',
               color: '#ffffff', fontWeight: '800', fontSize: '1rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 15px rgba(99, 102, 241, 0.3)'
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-              {recipient.name ? recipient.name.charAt(0).toUpperCase() : 'M'}
+              {recipient.name ? recipient.name.charAt(0).toUpperCase() : 'C'}
             </div>
-            <div style={{ position: 'absolute', bottom: '1px', right: '1px', width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', border: '2px solid #0a0c1a' }} />
+            <div style={{ position: 'absolute', bottom: '0px', right: '0px' }}>
+              <PresenceStatusBadge status={recipientPresence.currentStatus} size={10} />
+            </div>
           </div>
 
           <div>
             <div style={{ fontWeight: '800', fontSize: '0.95rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>{recipient.name}</span>
-              <ShieldCheck size={14} style={{ color: '#10b981' }} />
+              <PresenceStatusBadge status={recipientPresence.currentStatus} showLabel={true} showDot={false} />
             </div>
-            <div style={{ fontSize: '0.76rem', color: '#818cf8', marginTop: '1px', fontWeight: '600' }}>
-              {user?.role === 'Mentor' ? (recipient.preferredStack || recipient.department || 'Intern Candidate') : (recipient.designation || recipient.department || 'Assigned Corporate Mentor')}
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '1px' }}>
+              {isTyping ? <span style={{ color: '#10b981', fontWeight: '700' }}>typing...</span> : (recipientPresence.customStatus || recipient.preferredStack || 'Assigned Member')}
             </div>
           </div>
         </div>
 
-        <button 
-          onClick={onClose} 
-          style={{
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-            color: '#94a3b8', cursor: 'pointer', width: '30px', height: '30px', borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s'
-          }}
-        >
-          <X size={16} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button onClick={() => setShowSearch(!showSearch)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Search size={15} />
+          </button>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={15} />
+          </button>
+        </div>
       </div>
 
+      {/* Search Input Bar */}
+      {showSearch && (
+        <div style={{ padding: '8px 16px', background: 'rgba(15, 17, 32, 0.95)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <input 
+            type="text" 
+            className="form-control" 
+            placeholder="Search keyword, file name..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ fontSize: '0.8rem', padding: '6px 12px' }}
+          />
+        </div>
+      )}
+
       {/* Messages Feed */}
-      <div style={{ flex: 1, padding: '18px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px', background: '#060814' }}>
-        {messages.length === 0 ? (
-          <div style={{ textAlign: 'center', margin: 'auto', color: '#94a3b8', fontSize: '0.875rem', padding: '20px' }}>
-            <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.12)', border: '1px solid rgba(99, 102, 241, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto', color: '#818cf8' }}>
-              <MessageSquare size={24} />
-            </div>
-            <div style={{ fontWeight: '700', color: '#ffffff', marginBottom: '4px' }}>Direct Mentor Connection</div>
-            <div style={{ fontSize: '0.78rem', opacity: 0.85, lineHeight: 1.4 }}>Start a direct conversation with your corporate mentor {recipient.name}!</div>
-          </div>
-        ) : (
-          messages.map((msg, idx) => {
-            const currentUserId = String(user?._id || user?.id || '');
-            const msgSenderId = String(msg.senderId?._id || msg.senderId || '');
-            const isMe = Boolean(currentUserId && msgSenderId && currentUserId === msgSenderId);
-            const isHovered = activeHoverMsgId === msg._id;
-            const isEditingThis = editingMsgId === msg._id;
+      <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', background: '#060814' }}>
+        {filteredMessages.map((msg, idx) => {
+          const isMe = String(user?._id || user?.id) === String(msg.senderId?._id || msg.senderId);
+          return (
+            <div key={msg._id || idx} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '82%' }}>
+              {/* Reply Preview */}
+              {msg.replyToId && (
+                <div style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid #6366f1', padding: '4px 8px', borderRadius: '4px', marginBottom: '4px', color: '#94a3b8' }}>
+                  Replying to: {msg.replyToId.text || 'Attachment'}
+                </div>
+              )}
 
-            return (
-              <div
-                key={msg._id || idx}
-                onMouseEnter={() => setActiveHoverMsgId(msg._id)}
-                onMouseLeave={() => setActiveHoverMsgId(null)}
-                style={{
-                  alignSelf: isMe ? 'flex-end' : 'flex-start',
-                  maxWidth: '82%', position: 'relative',
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: isMe ? 'flex-end' : 'flex-start'
-                }}
-              >
-                {/* Hover Reactions & Actions Bar */}
-                {isHovered && !msg.isDeleted && (
-                  <div style={{
-                    position: 'absolute', top: '-28px', [isMe ? 'right' : 'left']: '0',
-                    background: '#1e1b4b', border: '1px solid rgba(99, 102, 241, 0.3)',
-                    borderRadius: '12px', padding: '2px 8px', display: 'flex', alignItems: 'center', gap: '6px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)', zIndex: 10
-                  }}>
-                    {['👍', '❤️', '🔥', '😂'].map(emoji => (
-                      <span key={emoji} onClick={() => handleReactMessage(msg._id, emoji)} style={{ cursor: 'pointer', fontSize: '0.8rem', padding: '1px' }}>
-                        {emoji}
-                      </span>
-                    ))}
-                    {isMe && (
-                      <>
-                        <button onClick={() => { setEditingMsgId(msg._id); setEditingText(msg.text); }} style={{ background: 'none', border: 'none', color: '#a5b4fc', cursor: 'pointer', padding: '2px' }}>
-                          <Edit2 size={12} />
-                        </button>
-                        <button onClick={() => setDeleteModalMsgId(msg._id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}>
-                          <Trash2 size={12} />
-                        </button>
-                      </>
-                    )}
+              {/* Chat Bubble */}
+              <div style={{
+                background: isMe ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'rgba(30, 41, 59, 0.85)',
+                color: '#ffffff', padding: '10px 14px', borderRadius: '16px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.3)', position: 'relative'
+              }}>
+                {msg.text && <div style={{ fontSize: '0.875rem', lineHeight: 1.4 }}>{msg.text}</div>}
+
+                {/* Audio Voice Player */}
+                {msg.audioUrl && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '10px' }}>
+                    <button onClick={() => setIsPlayingAudioId(isPlayingAudioId === msg._id ? null : msg._id)} style={{ background: '#10b981', border: 'none', color: '#fff', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {isPlayingAudioId === msg._id ? <Pause size={14} /> : <Play size={14} />}
+                    </button>
+                    <audio src={msg.audioUrl} controls style={{ height: '24px', width: '180px' }} />
                   </div>
                 )}
 
-                {/* Inline Edit Form */}
-                {isEditingThis ? (
-                  <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
-                    <input
-                      type="text"
-                      value={editingText}
-                      onChange={(e) => setEditingText(e.target.value)}
-                      style={{ flex: 1, padding: '8px 12px', borderRadius: '10px', background: '#1e1b4b', border: '1px solid #6366f1', color: '#fff', fontSize: '0.825rem', outline: 'none' }}
-                    />
-                    <button onClick={() => handleEditSubmit(msg._id)} style={{ background: '#10b981', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer' }}>
-                      <Check size={14} />
-                    </button>
-                    <button onClick={() => setEditingMsgId(null)} style={{ background: '#64748b', border: 'none', color: '#fff', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer' }}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{
-                    padding: '12px 16px', borderRadius: '18px',
-                    borderBottomRightRadius: isMe ? '4px' : '18px',
-                    borderBottomLeftRadius: isMe ? '18px' : '4px',
-                    background: msg.isDeleted
-                      ? 'rgba(255, 255, 255, 0.03)'
-                      : isMe 
-                        ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' 
-                        : 'rgba(255, 255, 255, 0.06)',
-                    border: msg.isDeleted ? '1px dashed rgba(255,255,255,0.1)' : isMe ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
-                    color: msg.isDeleted ? '#64748b' : '#ffffff', fontSize: '0.875rem', lineHeight: '1.45',
-                    fontStyle: msg.isDeleted ? 'italic' : 'normal',
-                    boxShadow: isMe && !msg.isDeleted ? '0 4px 14px rgba(99, 102, 241, 0.3)' : 'none'
-                  }}>
-                    {msg.isDeleted ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Ban size={14} />
-                        <span>This message was deleted</span>
-                      </div>
-                    ) : (
-                      <>
-                        {msg.attachmentUrl && (
-                          <div style={{ marginBottom: msg.text ? '8px' : '0' }}>
-                            {msg.attachmentType === 'image' ? (
-                              <img src={msg.attachmentUrl} alt="Attachment" style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '12px', display: 'block', objectFit: 'cover' }} />
-                            ) : (
-                              <a href={msg.attachmentUrl} download={msg.attachmentName || 'download'} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.2)', padding: '8px 12px', borderRadius: '10px', color: '#fff', textDecoration: 'none', fontSize: '0.78rem', fontWeight: '600' }}>
-                                <FileText size={14} style={{ color: '#a78bfa' }} />
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{msg.attachmentName || 'Download File'}</span>
-                                <Download size={14} style={{ marginLeft: '2px' }} />
-                              </a>
-                            )}
-                          </div>
-                        )}
-                        <div>{msg.text}</div>
-                      </>
-                    )}
-                  </div>
+                {/* Attachment Link */}
+                {msg.attachmentUrl && (
+                  <a href={msg.attachmentUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#38bdf8', fontSize: '0.78rem', marginTop: '6px', textDecoration: 'underline' }}>
+                    <FileText size={14} /> {msg.attachmentName || 'Attachment'}
+                  </a>
                 )}
 
-                {/* Footer Timestamp & Reactions */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                  {msg.reactions && msg.reactions.length > 0 && (
-                    <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.06)', borderRadius: '10px', padding: '1px 6px', fontSize: '0.72rem' }}>
-                      {Array.from(new Set(msg.reactions.map(r => r.emoji))).map(emoji => (
-                        <span key={emoji}>{emoji}</span>
-                      ))}
-                    </div>
+                {/* Time & Read Receipts */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', fontSize: '0.68rem', opacity: 0.75, marginTop: '4px' }}>
+                  <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  {isMe && (
+                    msg.status === 'seen' ? <CheckCheck size={13} style={{ color: '#34d399' }} /> : <Check size={13} />
                   )}
-                  <div style={{ fontSize: '0.68rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Clock size={10} />
-                    <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    {msg.isEdited && <span>(edited)</span>}
-                  </div>
                 </div>
               </div>
-            );
-          })
-        )}
+            </div>
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* WhatsApp-Style Floating Attachment Popup Menu */}
-      {showAttachMenu && (
-        <div style={{
-          position: 'absolute', bottom: '70px', left: '16px', zIndex: 100,
-          background: '#111428', border: '1px solid rgba(99, 102, 241, 0.3)',
-          borderRadius: '16px', padding: '6px', width: '180px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.85), 0 0 20px rgba(99, 102, 241, 0.2)',
-          display: 'flex', flexDirection: 'column', gap: '2px'
-        }}>
-          <div
-            onClick={() => docFileRef.current?.click()}
-            style={{
-              padding: '10px 12px', borderRadius: '10px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '10px',
-              color: '#ffffff', fontSize: '0.85rem', fontWeight: '600'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-          >
-            <FileText size={16} style={{ color: '#a78bfa' }} />
-            <span>Document</span>
-          </div>
-
-          <div
-            onClick={() => imageFileRef.current?.click()}
-            style={{
-              padding: '10px 12px', borderRadius: '10px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '10px',
-              color: '#ffffff', fontSize: '0.85rem', fontWeight: '600'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-          >
-            <Image size={16} style={{ color: '#38bdf8' }} />
-            <span>Photos & videos</span>
-          </div>
-        </div>
-      )}
-
-      {/* Selected File Attachment Tag Strip */}
-      {attachmentName && (
-        <div style={{ padding: '10px 18px', background: '#0d0f22', borderTop: '1px solid rgba(99,102,241,0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '0.8rem', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            <File size={16} />
-            <span>Attached: {attachmentName}</span>
-          </div>
-          <button onClick={() => { setAttachmentUrl(''); setAttachmentName(''); setAttachmentType(''); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
-            <X size={16} />
-          </button>
-        </div>
-      )}
-
-      {/* Input Bar */}
-      <form onSubmit={handleSendMessage} style={{ padding: '14px 18px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(15, 17, 32, 0.95)', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <button
-          type="button"
-          onClick={() => setShowAttachMenu(!showAttachMenu)}
-          style={{
-            background: showAttachMenu ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)', color: showAttachMenu ? '#818cf8' : '#94a3b8',
-            padding: '12px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s'
-          }}
-          title="Attach File from Explorer"
-        >
+      {/* Footer Controls & Input */}
+      <form onSubmit={handleSendMessage} style={{ padding: '12px 16px', background: '#0f1120', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <label style={{ cursor: 'pointer', color: '#94a3b8' }}>
           <Paperclip size={18} />
+          <input type="file" style={{ display: 'none' }} onChange={handleFileDrop} />
+        </label>
+
+        <button type="button" onClick={isRecording ? stopRecording : startRecording} style={{ background: 'none', border: 'none', color: isRecording ? '#ef4444' : '#94a3b8', cursor: 'pointer' }}>
+          {isRecording ? <Square size={18} /> : <Mic size={18} />}
         </button>
 
-        <input
-          type="text"
+        <input 
+          type="text" 
+          className="form-control" 
+          placeholder={isRecording ? `Recording... (${recordingTime}s)` : "Type a message..."} 
           value={newMsg}
-          onChange={(e) => setNewMsg(e.target.value)}
-          placeholder={`Write message to ${recipient.name}...`}
-          style={{ flex: 1, padding: '12px 16px', borderRadius: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#ffffff', fontSize: '0.875rem', outline: 'none' }}
+          onChange={handleInputChange}
+          style={{ flex: 1, fontSize: '0.85rem' }}
         />
-        <button
-          type="submit"
-          disabled={!newMsg.trim() && !attachmentUrl.trim()}
-          className="glow-btn"
-          style={{ padding: '12px 18px', borderRadius: '14px', opacity: (newMsg.trim() || attachmentUrl.trim()) ? 1 : 0.4 }}
-        >
+
+        <button type="submit" className="glow-btn" style={{ padding: '8px 14px' }}>
           <Send size={15} />
         </button>
       </form>
-
-      {/* Custom Dark Glassmorphism Delete Confirmation Modal */}
-      {deleteModalMsgId && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 10000,
-          background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
-        }}>
-          <div style={{
-            width: '100%', maxWidth: '340px', background: '#0a0c1a',
-            border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '20px', padding: '24px',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.9), 0 0 30px rgba(239, 68, 68, 0.2)',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              width: '48px', height: '48px', borderRadius: '50%',
-              background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 14px auto', boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)'
-            }}>
-              <Trash2 size={22} />
-            </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ffffff', margin: '0 0 8px 0' }}>
-              Delete Message for Everyone?
-            </h3>
-            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 18px 0', lineHeight: 1.5 }}>
-              This message will be permanently deleted for all participants in this conversation.
-            </p>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setDeleteModalMsgId(null)}
-                style={{
-                  flex: 1, padding: '9px', borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#94a3b8', fontSize: '0.825rem', fontWeight: '600', cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteMessage}
-                style={{
-                  flex: 1, padding: '9px', borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', border: 'none',
-                  color: '#ffffff', fontSize: '0.825rem', fontWeight: '700', cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)'
-                }}
-              >
-                Delete for Everyone
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

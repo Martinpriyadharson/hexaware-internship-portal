@@ -12,10 +12,12 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, setIsOpen, isCollapsed, setI
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'candidates', label: 'Candidates', icon: Users },
         { id: 'mentors', label: 'Mentors', icon: UserCheck },
+        { id: 'chat', label: 'Chat Hub', icon: MessageSquare },
       ];
     } else if (role === 'Candidate') {
       return [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'worklog', label: 'Daily Work Log', icon: FileText },
         { id: 'profile', label: 'My Profile', icon: User },
         { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
         { id: 'attendance', label: 'Attendance', icon: UserCheck },
@@ -25,8 +27,10 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, setIsOpen, isCollapsed, setI
       return [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'candidates', label: 'My Candidates', icon: Users },
+        { id: 'timeline', label: 'Work Logs & Timeline', icon: FileText },
         { id: 'assessments', label: 'Assessments', icon: ClipboardList },
         { id: 'profile', label: 'Profile', icon: User },
+        { id: 'chat', label: 'Chat Hub', icon: MessageSquare },
       ];
     }
   };

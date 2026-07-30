@@ -116,36 +116,52 @@ const MentorProfileView = ({ user }) => {
         </div>
 
         {/* Details Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-          <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Mail size={20} style={{ color: '#818cf8' }} />
-            <div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Email Address</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#f8fafc' }}>{profile?.email}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+          <div className="glass-card" style={{ padding: '18px 20px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(129, 140, 248, 0.12)', border: '1px solid rgba(129, 140, 248, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8', flexShrink: 0 }}>
+              <Mail size={20} />
+            </div>
+            <div style={{ minWidth: 0, flexGrow: 1 }}>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Email Address</div>
+              <div style={{ fontSize: '0.925rem', fontWeight: '700', color: '#ffffff', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={profile?.email || user?.email}>
+                {profile?.email || user?.email || 'saraswathi@hexaware.com'}
+              </div>
             </div>
           </div>
 
-          <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Briefcase size={20} style={{ color: '#38bdf8' }} />
-            <div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Department</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#f8fafc' }}>{profile?.department}</div>
+          <div className="glass-card" style={{ padding: '18px 20px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', flexShrink: 0 }}>
+              <Briefcase size={20} />
+            </div>
+            <div style={{ minWidth: 0, flexGrow: 1 }}>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Department</div>
+              <div style={{ fontSize: '0.925rem', fontWeight: '700', color: '#ffffff', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile?.department || user?.department || 'Hexaversity'}
+              </div>
             </div>
           </div>
 
-          <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Clock size={20} style={{ color: '#10b981' }} />
-            <div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Experience</div>
-              <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#f8fafc' }}>{profile?.experience}</div>
+          <div className="glass-card" style={{ padding: '18px 20px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', flexShrink: 0 }}>
+              <Clock size={20} />
+            </div>
+            <div style={{ minWidth: 0, flexGrow: 1 }}>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Experience</div>
+              <div style={{ fontSize: '0.925rem', fontWeight: '700', color: '#ffffff', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile?.experience || '5+ Years'}
+              </div>
             </div>
           </div>
 
-          <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Users size={20} style={{ color: '#a78bfa' }} />
-            <div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Assigned Candidates</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#ffffff' }}>{profile?.assignedCandidatesCount || 25} Interns</div>
+          <div className="glass-card" style={{ padding: '18px 20px', background: 'rgba(15, 17, 32, 0.65)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(167, 139, 250, 0.12)', border: '1px solid rgba(167, 139, 250, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', flexShrink: 0 }}>
+              <Users size={20} />
+            </div>
+            <div style={{ minWidth: 0, flexGrow: 1 }}>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Assigned Candidates</div>
+              <div style={{ fontSize: '0.925rem', fontWeight: '700', color: '#ffffff', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile?.assignedCandidatesCount !== undefined ? profile.assignedCandidatesCount : 2} Interns
+              </div>
             </div>
           </div>
         </div>

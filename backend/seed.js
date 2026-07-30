@@ -486,6 +486,42 @@ async function seedDatabase() {
     await mentorDoc.save();
     console.log('Default Mentor account seeded: mentor@hexaware.com / password123');
 
+    // 2b. Seed Admin Account
+    const adminHashedPassword = await bcrypt.hash('admin123', 10);
+    const adminUser = new User({
+      name: 'System Admin',
+      email: 'admin@hexaware.com',
+      password: adminHashedPassword,
+      role: 'Admin',
+      isProfileCompleted: true
+    });
+    await adminUser.save();
+    console.log('Default Admin account seeded: admin@hexaware.com / admin123');
+
+    // 2c. Seed Additional Mentors for Admin Allocation
+    const m2User = new User({
+      name: 'Priya Sharma (Lead Java Mentor)',
+      email: 'priya.mentor@hexaware.com',
+      password: hashedPassword,
+      role: 'Mentor',
+      designation: 'Lead Mentor',
+      isProfileCompleted: true
+    });
+    await m2User.save();
+    await Mentor.create({ userId: m2User._id, department: 'Enterprise Java', specialization: 'Java & Spring Boot' });
+
+    const m3User = new User({
+      name: 'Rajesh Kumar (AI & Cloud Mentor)',
+      email: 'rajesh.mentor@hexaware.com',
+      password: hashedPassword,
+      role: 'Mentor',
+      designation: 'Senior AI Specialist',
+      isProfileCompleted: true
+    });
+    await m3User.save();
+    await Mentor.create({ userId: m3User._id, department: 'AI & Data Engineering', specialization: 'Python, GenAI & Cloud' });
+    console.log('Seeded additional mentors: Priya Sharma & Rajesh Kumar');
+
     // 3. Seed 24 Candidates
     const candidateData = [
       { name: 'Karthik S', email: 'karthik@college.edu', stack: 'Python Full Stack', score: 92.5, status: 'Completed', date: 'May 27, 2026', college: 'Anna University' },

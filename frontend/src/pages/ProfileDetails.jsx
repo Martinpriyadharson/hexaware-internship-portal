@@ -3,10 +3,11 @@ import { AuthContext } from '../context/AuthContext';
 import { 
   User, BookOpen, MapPin, ShieldAlert, ArrowRight, 
   Save, GraduationCap, CheckCircle2, Info, Mail, Phone, Calendar, Clock,
-  Globe, Landmark, School, Award, Check, UploadCloud, FileText
+  Globe, Landmark, School, Award, Check, UploadCloud, FileText, Eye, Download
 } from 'lucide-react';
 import tneaColleges from '../data/tneaColleges.json';
 import Galaxy from '../components/Galaxy';
+import { openResumeInNewTab, downloadResumeFile, getResumeFileName } from '../utils/resumeHelper';
 
 const DEGREES = [
   'B.E. (Bachelor of Engineering)',
@@ -232,7 +233,11 @@ const ProfileDetails = () => {
       setFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, resumeUrl: reader.result }));
+        setFormData(prev => ({ 
+          ...prev, 
+          resumeUrl: reader.result,
+          resumeName: file.name
+        }));
       };
       reader.readAsDataURL(file);
     }
@@ -271,15 +276,58 @@ const ProfileDetails = () => {
   useEffect(() => {
     if (user) {
       const dbCollege = user.college || '';
-      const dbDegree = user.degree || '';
-      const dbBranch = user.branch || '';
+      const rawDegree = user.degree || '';
+      const rawBranch = user.branch || '';
+      const rawYear = user.currentYear || '';
       const dbState = user.state || '';
       const dbCity = user.city || '';
       const dbCountry = user.country || 'India';
 
+      // Normalize Degree option matching
+      let dbDegree = rawDegree;
+      const degUpper = rawDegree.toUpperCase();
+      if (degUpper.includes('B.E') || degUpper.includes('BE')) dbDegree = 'B.E';
+      else if (degUpper.includes('B.TECH') || degUpper.includes('BTECH')) dbDegree = 'B.Tech';
+      else if (degUpper.includes('M.TECH') || degUpper.includes('MTECH')) dbDegree = 'M.Tech';
+      else if (degUpper.includes('M.E') || degUpper.includes('ME')) dbDegree = 'M.E';
+      else if (degUpper.includes('B.SC') || degUpper.includes('BSC')) dbDegree = 'B.Sc';
+      else if (degUpper.includes('M.SC') || degUpper.includes('MSC')) dbDegree = 'M.Sc';
+      else if (degUpper.includes('MCA')) dbDegree = 'MCA';
+      else if (degUpper.includes('BCA')) dbDegree = 'BCA';
+
+      // Normalize Branch option matching
+      const actualRawBranch = user.branch || user.department || user.specialization || user.branchName || '';
+      let dbBranch = actualRawBranch;
+      if (actualRawBranch) {
+        const brUpper = String(actualRawBranch).toUpperCase();
+        if (brUpper.includes('COMP') || brUpper.includes('CSE') || brUpper.includes('SCIENCE')) {
+          dbBranch = 'Computer Science & Engineering';
+        } else if (brUpper.includes('INFO') || brUpper.includes('IT')) {
+          dbBranch = 'Information Technology';
+        } else if (brUpper.includes('ARTIFICIAL') || brUpper.includes('AI') || brUpper.includes('DATA')) {
+          dbBranch = 'Artificial Intelligence & Data Science';
+        } else if (brUpper.includes('ELECTRONICS') || brUpper.includes('ECE') || brUpper.includes('COMMUNICATION')) {
+          dbBranch = 'Electronics & Communication';
+        } else if (brUpper.includes('ELECTRICAL') || brUpper.includes('EEE')) {
+          dbBranch = 'Electrical & Electronics';
+        } else if (brUpper.includes('MECH')) {
+          dbBranch = 'Mechanical Engineering';
+        } else if (brUpper.includes('CIVIL')) {
+          dbBranch = 'Civil Engineering';
+        } else if (brUpper.includes('CYBER') || brUpper.includes('SECURITY')) {
+          dbBranch = 'Cyber Security';
+        }
+      }
+
+      // Normalize Current Year option matching
+      let dbYear = rawYear;
+      const yrUpper = String(rawYear).toUpperCase();
+      if (yrUpper.includes('4') || yrUpper.includes('FINAL')) dbYear = 'Final Year (4th Year)';
+      else if (yrUpper.includes('3') || yrUpper.includes('PRE')) dbYear = 'Pre-Final Year (3rd Year)';
+      else if (yrUpper.includes('2')) dbYear = '2nd Year';
+      else if (yrUpper.includes('1')) dbYear = '1st Year';
+
       const isCollegeInList = tneaColleges.includes(dbCollege);
-      const isDegreeInList = DEGREES.includes(dbDegree);
-      const isBranchInList = BRANCHES.includes(dbBranch);
       const isStateInList = INDIAN_STATES.includes(dbState);
       const isCountryInList = ['India'].includes(dbCountry);
       
@@ -287,12 +335,6 @@ const ProfileDetails = () => {
       if (isStateInList && CITIES_BY_STATE[dbState]) {
         isCityInList = CITIES_BY_STATE[dbState].includes(dbCity);
       }
-
-      let dbYear = user.currentYear || '';
-      if (dbYear.includes('4th') || dbYear.includes('Final')) dbYear = '4th Year';
-      else if (dbYear.includes('3rd')) dbYear = '3rd Year';
-      else if (dbYear.includes('2nd')) dbYear = '2nd Year';
-      else if (dbYear.includes('1st')) dbYear = '1st Year';
 
       setFormData(prev => ({
         ...prev,
@@ -302,22 +344,21 @@ const ProfileDetails = () => {
         gender: user.gender || '',
         mobile: user.mobile || '',
         college: dbCollege ? (isCollegeInList ? dbCollege : 'Other') : '',
-        degree: dbDegree ? (isDegreeInList ? dbDegree : 'Other') : '',
-        branch: dbBranch ? (isBranchInList ? dbBranch : 'Other') : '',
+        degree: dbDegree,
+        branch: dbBranch,
         currentYear: dbYear,
         graduationYear: user.graduationYear || '',
         cgpa: user.cgpa || '',
         resumeUrl: user.resumeUrl || '',
+        resumeName: user.resumeName || '',
         city: dbCity ? (isCityInList ? dbCity : 'Other') : '',
         state: dbState ? (isStateInList ? dbState : 'Other') : '',
         country: dbCountry ? (isCountryInList ? dbCountry : 'Other') : 'India',
-        isInfoAccurate: user.isDeclarationConfirmed || false,
-        isTermsAccepted: user.isDeclarationConfirmed || false,
+        isInfoAccurate: Boolean(user.isDeclarationConfirmed || user.isProfileCompleted || user.hasAttemptedAssessment),
+        isTermsAccepted: Boolean(user.isDeclarationConfirmed || user.isProfileCompleted || user.hasAttemptedAssessment),
       }));
 
       if (dbCollege && !isCollegeInList) setCustomCollege(dbCollege);
-      if (dbDegree && !isDegreeInList) setCustomDegree(dbDegree);
-      if (dbBranch && !isBranchInList) setCustomBranch(dbBranch);
       if (dbState && !isStateInList) setCustomState(dbState);
       if (dbCity && !isCityInList) setCustomCity(dbCity);
       if (dbCountry && !isCountryInList) setCustomCountry(dbCountry);
@@ -326,6 +367,12 @@ const ProfileDetails = () => {
 
   // Dynamically calculate profile completeness percentage
   useEffect(() => {
+    // If candidate has already completed setup, declaration, or assessment, profile is 100% complete
+    if (user?.isProfileCompleted || user?.isDeclarationConfirmed || user?.hasAttemptedAssessment || user?.assignedMentorId) {
+      setCompleteness(100);
+      return;
+    }
+
     const fieldsToTrack = [
       'name', 'dob', 'gender', 'mobile', 'college', 'degree', 
       'branch', 'currentYear', 'graduationYear', 'cgpa', 
@@ -337,13 +384,13 @@ const ProfileDetails = () => {
       const val = formData[field];
       if (typeof val === 'boolean') {
         if (val === true) filledCount++;
-      } else if (val && val.trim() !== '') {
+      } else if (val && String(val).trim() !== '') {
         if (field === 'college' && val === 'Other') {
-          if (customCollege.trim() !== '') filledCount++;
+          if ((customCollege && customCollege.trim() !== '') || (user?.college && user?.college !== 'Other')) filledCount++;
         } else if (field === 'degree' && val === 'Other') {
-          if (customDegree.trim() !== '') filledCount++;
+          if ((customDegree && customDegree.trim() !== '') || (user?.degree && user?.degree !== 'Other')) filledCount++;
         } else if (field === 'branch' && val === 'Other') {
-          if (customBranch.trim() !== '') filledCount++;
+          if ((customBranch && customBranch.trim() !== '') || (user?.branch && user?.branch !== 'Other')) filledCount++;
         } else {
           filledCount++;
         }
@@ -352,7 +399,7 @@ const ProfileDetails = () => {
 
     const percent = Math.round((filledCount / fieldsToTrack.length) * 100);
     setCompleteness(percent);
-  }, [formData, customCollege, customDegree, customBranch]);
+  }, [formData, customCollege, customDegree, customBranch, user]);
 
   const getCurrentYearOptions = (deg) => {
     if (!deg) {
@@ -466,6 +513,7 @@ const ProfileDetails = () => {
   };
 
   const getSubmissionData = (isFinalSubmit = false) => {
+    const isAlreadyCompleted = Boolean(user?.isProfileCompleted || user?.hasAttemptedAssessment || user?.assignedMentorId);
     return {
       name: formData.name,
       college: formData.college === 'Other' ? customCollege : formData.college,
@@ -482,8 +530,8 @@ const ProfileDetails = () => {
       state: formData.state === 'Other' ? customState : formData.state,
       country: formData.country === 'Other' ? customCountry : formData.country,
       internshipDuration: formData.internshipDuration || '3 Months',
-      isDeclarationConfirmed: isFinalSubmit ? true : (formData.isInfoAccurate && formData.isTermsAccepted),
-      isProfileCompleted: isFinalSubmit ? true : Boolean(user?.isProfileCompleted)
+      isDeclarationConfirmed: (isFinalSubmit || isAlreadyCompleted) ? true : (formData.isInfoAccurate && formData.isTermsAccepted),
+      isProfileCompleted: (isFinalSubmit || isAlreadyCompleted) ? true : false
     };
   };
 
@@ -546,7 +594,12 @@ const ProfileDetails = () => {
     }
 
     const res = await updateProfile(submissionData);
-    if (!res.success) {
+    if (res.success) {
+      const isAlreadyCompleted = Boolean(user?.isProfileCompleted || user?.hasAttemptedAssessment || user?.assignedMentorId);
+      setLocalSuccess(isAlreadyCompleted ? 'Profile details updated successfully!' : 'Profile setup completed! Loading assessment...');
+      setTimeout(() => setLocalSuccess(''), 3500);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
       setLocalError(res.msg || 'Something went wrong updating your profile. Please try again.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -562,33 +615,10 @@ const ProfileDetails = () => {
           Candidate Profile
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '600px', margin: '0 auto' }}>
-          Complete the collegiate details below to initialize your Hexaware eligibility assessment.
+          {(user?.isProfileCompleted || user?.hasAttemptedAssessment || user?.assignedMentorId) 
+            ? 'View and update your collegiate credentials, contact information, and academic records.' 
+            : 'Complete the collegiate details below to initialize your Hexaware eligibility assessment.'}
         </p>
-      </div>
-
-      {/* Completeness Tracker Card */}
-      <div className="glass-card" style={{ padding: '20px 24px', marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '20px', background: 'rgba(99, 102, 241, 0.04)', borderColor: 'rgba(99, 102, 241, 0.15)' }}>
-        <div style={{ flexShrink: 0 }}>
-          <div style={{ 
-            width: '56px', height: '56px', borderRadius: '50%', 
-            background: completeness === 100 ? 'var(--success)' : 'rgba(99, 102, 241, 0.1)', 
-            color: completeness === 100 ? 'white' : 'var(--primary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '1.1rem' 
-          }}>
-            {completeness}%
-          </div>
-        </div>
-        <div style={{ flexGrow: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '600', marginBottom: '6px' }}>
-            <span>PROFILE COMPLETENESS</span>
-            <span style={{ color: completeness === 100 ? 'var(--success)' : 'var(--primary)' }}>
-              {completeness === 100 ? 'Ready to Submit' : 'Required Fields Remaining'}
-            </span>
-          </div>
-          <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{ width: `${completeness}%`, height: '100%', background: completeness === 100 ? 'var(--success)' : 'linear-gradient(90deg, var(--primary) 0%, var(--accent-cyan) 100%)', transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} />
-          </div>
-        </div>
       </div>
 
       {localError && (
@@ -893,21 +923,56 @@ const ProfileDetails = () => {
               />
 
               {formData.resumeUrl ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
-                  <div style={{
-                    width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)',
-                    border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    <FileText size={24} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+                    <div style={{
+                      width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      <FileText size={24} />
+                    </div>
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{fileName || formData.resumeName || user?.resumeName || getResumeFileName(user)}</span>
+                        <CheckCircle2 size={16} style={{ color: '#10b981' }} />
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#10b981', marginTop: '2px' }}>
+                        File attached successfully! Click or drag to replace document.
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>{fileName || 'Resume Document Attached'}</span>
-                      <CheckCircle2 size={16} style={{ color: '#10b981' }} />
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: '#10b981', marginTop: '2px' }}>
-                      File attached successfully! Click or drag to replace document.
-                    </div>
+
+                  <div style={{ display: 'flex', gap: '10px', zIndex: 20, position: 'relative', marginTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openResumeInNewTab(formData.resumeUrl, fileName || formData.resumeName || getResumeFileName(user));
+                      }}
+                      className="secondary-btn"
+                      style={{
+                        padding: '6px 14px', fontSize: '0.8rem', background: 'rgba(99, 102, 241, 0.15)',
+                        borderColor: 'rgba(99, 102, 241, 0.3)', color: '#818cf8', borderRadius: '8px',
+                        display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer'
+                      }}
+                    >
+                      <Eye size={14} /> View Resume
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadResumeFile(formData.resumeUrl, `${formData.name || user?.name || 'Candidate'}_Resume.pdf`);
+                      }}
+                      className="glow-btn"
+                      style={{
+                        padding: '6px 14px', fontSize: '0.8rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#ffffff', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer'
+                      }}
+                    >
+                      <Download size={14} /> Download Resume
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -1158,41 +1223,6 @@ const ProfileDetails = () => {
                 />
               </div>
             </div>
-
-            <div className="responsive-grid grid-2" style={{ marginTop: '16px' }}>
-              <div className="form-group">
-                <label htmlFor="preferredLocation">Preferred Hexaware Work Location</label>
-                <select
-                  id="preferredLocation"
-                  name="preferredLocation"
-                  className="form-control"
-                  value={formData.preferredLocation || 'Chennai'}
-                  onChange={handleChange}
-                >
-                  <option value="Chennai">Chennai (Siruseri / SIPCOT Campus)</option>
-                  <option value="Bengaluru">Bengaluru (Electronic City)</option>
-                  <option value="Hyderabad">Hyderabad (Hitech City)</option>
-                  <option value="Pune">Pune (Hinjawadi)</option>
-                  <option value="Mumbai">Mumbai (Navi Mumbai)</option>
-                  <option value="Noida">Noida (Delhi NCR)</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="activeBacklogs">Active Backlogs / Arrears</label>
-                <select
-                  id="activeBacklogs"
-                  name="activeBacklogs"
-                  className="form-control"
-                  value={formData.activeBacklogs || '0'}
-                  onChange={handleChange}
-                >
-                  <option value="0">0 (No Active Backlogs)</option>
-                  <option value="1">1 Active Backlog</option>
-                  <option value="2+">2+ Active Backlogs</option>
-                </select>
-              </div>
-            </div>
           </div>
         )}
 
@@ -1256,15 +1286,31 @@ const ProfileDetails = () => {
 
         {/* Buttons Section */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '32px', paddingBottom: '24px' }}>
-          <button type="button" onClick={handleSave} className="secondary-btn" style={{ gap: '6px', padding: '12px 24px' }}>
+          <button 
+            type="button" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSave(e);
+            }} 
+            className="secondary-btn" 
+            style={{ gap: '6px', padding: '12px 24px' }}
+          >
             <Save size={16} />
-            <span>Save Progress</span>
+            <span>Save Draft</span>
           </button>
 
-          <button type="submit" className="glow-btn" style={{ padding: '12px 28px', background: 'linear-gradient(135deg, var(--success) 0%, #059669 100%)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}>
-            <span>Proceed to Eligibility Assessment</span>
-            <ArrowRight size={16} />
-          </button>
+          {(user?.isProfileCompleted || user?.hasAttemptedAssessment || user?.assignedMentorId) ? (
+            <button type="submit" className="glow-btn" style={{ padding: '12px 28px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={16} />
+              <span>Save Profile Changes</span>
+            </button>
+          ) : (
+            <button type="submit" className="glow-btn" style={{ padding: '12px 28px', background: 'linear-gradient(135deg, var(--success) 0%, #059669 100%)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Proceed to Eligibility Assessment</span>
+              <ArrowRight size={16} />
+            </button>
+          )}
         </div>
       </form>
     </div>
