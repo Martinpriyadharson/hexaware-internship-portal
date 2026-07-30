@@ -138,43 +138,41 @@ export const CallProvider = ({ children, user, token }) => {
     }, 1000);
   };
 
-  const cleanupWebRTC = () => {
-    clearInterval(durationTimerRef.current);
+  const resetCallState = () => {
     stopRinging();
-
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
-      localStreamRef.current = null;
-    }
-    if (remoteStreamRef.current) {
-      remoteStreamRef.current.getTracks().forEach(track => track.stop());
-      remoteStreamRef.current = null;
-    }
+    if (durationTimerRef.current) clearInterval(durationTimerRef.current);
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
     }
-  };
-
-  const resetCallState = () => {
-    cleanupWebRTC();
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => t.stop());
+      localStreamRef.current = null;
+    }
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current.getTracks().forEach(t => t.stop());
+      remoteStreamRef.current = null;
+    }
     setCallState('idle');
     setPeerInfo(null);
     setIsMuted(false);
     setIsVideoOff(false);
     setIsScreenSharing(false);
+    setHasRemoteVideo(false);
+    setHasLocalVideo(false);
+    setRemoteMediaStatus({ audio: true, video: true });
     setCallDuration(0);
   };
 
-  // Helper to create Peer Connection
-  const createPeerConnection = (targetUserId) => {
+  // WebRTC PeerConnection Setup
+  const createPeerConnection = (targetId) => {
     const pc = new RTCPeerConnection(RTC_CONFIG);
     pcRef.current = pc;
 
     pc.onicecandidate = (event) => {
-      if (event.candidate && socketRef.current) {
-        socketRef.current.emit('call:ice-candidate', {
-          recipientId: targetUserId,
+      if (event.candidate) {
+        socketRef.current?.emit('call:ice-candidate', {
+          targetId,
           candidate: event.candidate
         });
       }
@@ -186,6 +184,15 @@ export const CallProvider = ({ children, user, token }) => {
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = stream;
       }
+      const vTracks = stream ? stream.getVideoTracks() : [];
+      const isActive = vTracks.length > 0 && vTracks[0].enabled && !vTracks[0].muted && vTracks[0].readyState === 'live';
+      setHasRemoteVideo(!!isActive);
+
+      vTracks.forEach(track => {
+        track.onunmute = () => setHasRemoteVideo(true);
+        track.onmute = () => setHasRemoteVideo(false);
+        track.onended = () => setHasRemoteVideo(false);
+      });
     };
 
     return pc;
@@ -200,6 +207,8 @@ export const CallProvider = ({ children, user, token }) => {
           audio: true,
           video: { width: { ideal: 1280 }, height: { ideal: 720 } }
         });
+        const vTracks = fullStream.getVideoTracks();
+        setHasLocalVideo(vTracks.length > 0 && vTracks[0].enabled);
         return { stream: fullStream, effectiveType: 'video' };
       } catch (err) {
         console.warn('Video device unavailable or permission denied, falling back to audio-only stream:', err);
@@ -209,6 +218,7 @@ export const CallProvider = ({ children, user, token }) => {
     // 2. Audio-only stream
     try {
       const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      setHasLocalVideo(false);
       return { stream: audioStream, effectiveType: 'audio' };
     } catch (err) {
       console.warn('Audio device unavailable or permission denied, creating synthetic stream:', err);
@@ -223,6 +233,7 @@ export const CallProvider = ({ children, user, token }) => {
       ctx.fillStyle = '#0a0c1a';
       ctx.fillRect(0, 0, 640, 480);
       const synthStream = canvas.captureStream(10);
+      setHasLocalVideo(false);
       return { stream: synthStream, effectiveType: 'audio' };
     } catch (e) {
       throw new Error('No media devices available');

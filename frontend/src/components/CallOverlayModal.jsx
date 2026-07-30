@@ -20,8 +20,12 @@ const CallOverlayModal = () => {
   const {
     callState, callType, peerInfo, isMuted, isVideoOff, isScreenSharing,
     remoteMediaStatus, callDuration, localVideoRef, remoteVideoRef,
+    hasRemoteVideo, hasLocalVideo,
     acceptCall, rejectCall, endCall, toggleAudio, toggleVideo, toggleScreenShare
   } = call;
+
+  const shouldShowRemoteVideo = callType === 'video' && !isVideoOff && remoteMediaStatus.video && hasRemoteVideo;
+  const shouldShowLocalVideo = callType === 'video' && !isVideoOff && hasLocalVideo;
 
   // 1. Incoming Call Ringing Dialog
   if (callState === 'incoming_ringing') {
@@ -80,10 +84,8 @@ const CallOverlayModal = () => {
                 width: '60px', height: '60px', borderRadius: '50%', border: 'none',
                 background: '#ef4444', color: '#fff', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 8px 20px rgba(239, 68, 68, 0.4)', transition: 'transform 0.15s'
+                boxShadow: '0 8px 20px rgba(239,68,68,0.4)', transition: 'transform 0.15s'
               }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
               title="Decline Call"
             >
               <PhoneOff size={24} />
@@ -93,16 +95,14 @@ const CallOverlayModal = () => {
             <button
               onClick={acceptCall}
               style={{
-                width: '60px', height: '60px', borderRadius: '50%', border: 'none',
-                background: '#10b981', color: '#fff', cursor: 'pointer',
+                width: '64px', height: '64px', borderRadius: '50%', border: 'none',
+                background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 8px 20px rgba(16, 185, 129, 0.4)', transition: 'transform 0.15s'
+                boxShadow: '0 8px 25px rgba(16,185,129,0.5)', transition: 'transform 0.15s'
               }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
               title="Accept Call"
             >
-              {callType === 'video' ? <Video size={24} /> : <Phone size={24} />}
+              <Phone size={26} />
             </button>
           </div>
         </div>
@@ -120,33 +120,49 @@ const CallOverlayModal = () => {
         animation: 'fadeIn 0.25s ease'
       }}>
         <div style={{
-          width: '100%', maxWidth: '400px', background: '#0f142a',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '28px',
+          width: '100%', maxWidth: '420px', background: '#0f142a',
+          border: '1px solid rgba(99, 102, 241, 0.4)', borderRadius: '28px',
           padding: '32px 24px', textAlign: 'center',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.9)',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(99,102,241,0.3)',
           display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
-          <div style={{
-            width: '84px', height: '84px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #6366f1, #a78bfa)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '2.2rem', fontWeight: '800', color: '#fff',
-            marginBottom: '20px', boxShadow: '0 8px 25px rgba(99,102,241,0.4)'
-          }}>
-            {peerInfo?.name?.[0] || '?'}
+          {/* Calling Avatar Pulse */}
+          <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <div style={{
+              width: '84px', height: '84px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '2.2rem', fontWeight: '800', color: '#fff',
+              boxShadow: '0 8px 25px rgba(99,102,241,0.5)'
+            }}>
+              {peerInfo?.name?.[0] || '?'}
+            </div>
+            <div style={{
+              position: 'absolute', inset: '-8px', borderRadius: '50%',
+              border: '2px solid #818cf8', animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite'
+            }} />
           </div>
 
-          <h3 style={{ margin: '0 0 4px', fontSize: '1.3rem', fontWeight: '800', color: '#fff' }}>
+          <span style={{
+            fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase',
+            letterSpacing: '0.08em', color: '#818cf8', background: 'rgba(99,102,241,0.15)',
+            padding: '4px 12px', borderRadius: '20px', marginBottom: '8px'
+          }}>
             Calling {peerInfo?.name || 'User'}...
+          </span>
+
+          <h3 style={{ margin: '0 0 4px', fontSize: '1.4rem', fontWeight: '800', color: '#fff' }}>
+            {peerInfo?.name || 'User'}
           </h3>
           <p style={{ margin: '0 0 28px', fontSize: '0.85rem', color: '#94a3b8' }}>
             Ringing... Waiting for answer
           </p>
 
+          {/* End Outgoing Call */}
           <button
             onClick={endCall}
             style={{
-              width: '56px', height: '56px', borderRadius: '50%', border: 'none',
+              width: '60px', height: '60px', borderRadius: '50%', border: 'none',
               background: '#ef4444', color: '#fff', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 8px 20px rgba(239,68,68,0.4)'
@@ -221,7 +237,7 @@ const CallOverlayModal = () => {
 
       {/* Main Stream Area */}
       <div style={{ flex: 1, position: 'relative', background: '#02030a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {callType === 'video' && !isVideoOff && remoteMediaStatus.video ? (
+        {shouldShowRemoteVideo ? (
           <>
             {/* Remote Video Stream */}
             <video
@@ -233,8 +249,8 @@ const CallOverlayModal = () => {
               }}
             />
 
-            {/* Local Video Stream Inset (PIP) */}
-            {!isMinimized && (
+            {/* Local Video Stream Inset (PIP) - Only render when local camera feed is active */}
+            {!isMinimized && shouldShowLocalVideo && (
               <div style={{
                 position: 'absolute', bottom: '24px', right: '24px',
                 width: '200px', height: '130px', borderRadius: '16px',
