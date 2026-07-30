@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../config/api';
 import Sidebar from '../components/Sidebar';
 import TopNavigation from '../components/TopNavigation';
 import NotificationDrawer from '../components/NotificationDrawer';
@@ -62,7 +63,7 @@ const AdminDashboard = ({ user, onLogout }) => {
     setLoading(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/admin/overview', {
+      const res = await fetch(`${API_URL}/admin/overview`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -109,7 +110,7 @@ const AdminDashboard = ({ user, onLogout }) => {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/allocate-mentor', {
+      const res = await fetch(`${API_URL}/admin/allocate-mentor`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -148,7 +149,7 @@ const AdminDashboard = ({ user, onLogout }) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/admin/create-mentor', {
+      const res = await fetch(`${API_URL}/admin/create-mentor`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

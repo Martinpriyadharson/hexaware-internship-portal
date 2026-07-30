@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
+import { API_URL } from '../config/api';
 import { AuthContext } from '../context/AuthContext';
 import { Clock, AlertTriangle, ChevronRight, HelpCircle } from 'lucide-react';
 
@@ -28,7 +29,7 @@ const TestScreen = ({ stack, onTestFinished }) => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/test/questions/${encodeURIComponent(stack)}`, {
+        const res = await fetch(`${API_URL}/test/questions/${encodeURIComponent(stack)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -110,7 +111,7 @@ const TestScreen = ({ stack, onTestFinished }) => {
     }));
 
     try {
-      const res = await fetch('http://localhost:5000/api/test/submit', {
+      const res = await fetch(`${API_URL}/test/submit`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -166,7 +167,7 @@ const TestScreen = ({ stack, onTestFinished }) => {
             setLoading(true);
             const refetch = async () => {
               try {
-                const res = await fetch(`http://localhost:5000/api/test/questions/${encodeURIComponent(stack)}`, {
+                const res = await fetch(`${API_URL}/test/questions/${encodeURIComponent(stack)}`, {
                   headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

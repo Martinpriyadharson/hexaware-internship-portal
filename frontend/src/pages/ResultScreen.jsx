@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { API_URL } from '../config/api';
 import { AuthContext } from '../context/AuthContext';
 import { CheckCircle, XCircle, LogOut, ArrowLeft, Send, Clock, ShieldCheck, Lock, RefreshCw, CheckCircle2, Sparkles, ArrowRight, UserCheck } from 'lucide-react';
 
@@ -36,7 +37,7 @@ const ResultScreen = ({ result, stack, onReset }) => {
   const handleSubmitToAdmin = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch('http://localhost:5000/api/test/submit-to-admin', {
+      const res = await fetch(`${API_URL}/test/submit-to-admin`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

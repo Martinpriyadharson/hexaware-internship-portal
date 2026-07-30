@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { SOCKET_URL } from '../config/api';
 
-const BACKEND = 'http://localhost:5000';
+const BACKEND = SOCKET_URL;
 const RTC_CONFIG = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },

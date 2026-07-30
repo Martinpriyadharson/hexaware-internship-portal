@@ -8,6 +8,7 @@ import {
   Search, Reply, CheckCheck, UploadCloud
 } from 'lucide-react';
 import PresenceStatusBadge from './PresenceStatusBadge';
+import { SOCKET_URL, API_URL } from '../config/api';
 
 let socket = null;
 
@@ -51,7 +52,7 @@ const ChatDrawer = ({ recipient, onClose }) => {
     if (!recipient) return;
 
     // Initialize Socket.IO connection
-    socket = io('http://localhost:5000', {
+    socket = io(SOCKET_URL, {
       auth: { token }
     });
 
@@ -92,7 +93,7 @@ const ChatDrawer = ({ recipient, onClose }) => {
   const fetchRecipientPresence = async () => {
     try {
       const recipientId = recipient._id || recipient.id;
-      const res = await fetch(`http://localhost:5000/api/presence/user/${recipientId}`, {
+      const res = await fetch(`${API_URL}/presence/user/${recipientId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -105,7 +106,7 @@ const ChatDrawer = ({ recipient, onClose }) => {
   const fetchMessages = async () => {
     try {
       const recipientId = recipient._id || recipient.id;
-      const res = await fetch(`http://localhost:5000/api/messages/${recipientId}`, {
+      const res = await fetch(`${API_URL}/messages/${recipientId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -222,7 +223,7 @@ const ChatDrawer = ({ recipient, onClose }) => {
     setReplyToMsg(null);
 
     try {
-      const res = await fetch('http://localhost:5000/api/messages/send', {
+      const res = await fetch(`${API_URL}/messages/send`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -242,7 +243,7 @@ const ChatDrawer = ({ recipient, onClose }) => {
 
   const togglePin = async (msgId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/pin`, {
+      const res = await fetch(`${API_URL}/messages/${msgId}/pin`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -255,7 +256,7 @@ const ChatDrawer = ({ recipient, onClose }) => {
 
   const toggleStar = async (msgId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${msgId}/star`, {
+      const res = await fetch(`${API_URL}/messages/${msgId}/star`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });

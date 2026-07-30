@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { API_URL } from '../config/api';
 import { AuthContext } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
 import TopNavigation from '../components/TopNavigation';
@@ -47,7 +48,7 @@ const CandidateDashboard = ({ onSelectStack }) => {
 
   const fetchCandidateTasks = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/tasks/candidate', {
+      const res = await fetch(`${API_URL}/tasks/my-tasks`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -153,7 +154,7 @@ const CandidateDashboard = ({ onSelectStack }) => {
 
     setSubmittingDeliverable(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${selectedTaskForSubmit._id}/submit`, {
+      const res = await fetch(`${API_URL}/tasks/${selectedTaskForSubmit._id}/submit`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

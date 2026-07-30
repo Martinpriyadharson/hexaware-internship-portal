@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../config/api';
 import Sidebar from '../components/Sidebar';
 import TopNavigation from '../components/TopNavigation';
 import CandidateDetailsModal from '../components/CandidateDetailsModal';
@@ -63,7 +64,7 @@ const MentorDashboard = ({ user, onLogout }) => {
   const fetchMentorTasks = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/tasks/mentor', {
+      const res = await fetch(`${API_URL}/tasks/mentor`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -79,7 +80,7 @@ const MentorDashboard = ({ user, onLogout }) => {
     setLoading(true);
     const token = localStorage.getItem('token');
     try {
-      let url = 'http://localhost:5000/api/mentor/dashboard';
+      let url = `${API_URL}/mentor/dashboard`;
       if (start && end) url += `?start=${start}&end=${end}`;
 
       const res = await fetch(url, {
@@ -104,7 +105,7 @@ const MentorDashboard = ({ user, onLogout }) => {
   const fetchCandidatesData = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/candidates', {
+      const res = await fetch(`${API_URL}/mentor/candidates`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -119,7 +120,7 @@ const MentorDashboard = ({ user, onLogout }) => {
   const fetchResultsData = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/results', {
+      const res = await fetch(`${API_URL}/mentor/results`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -141,7 +142,7 @@ const MentorDashboard = ({ user, onLogout }) => {
     if (!deleteConfirmId) return;
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://localhost:5000/api/mentor/results/${deleteConfirmId}`, {
+      const res = await fetch(`${API_URL}/mentor/results/${deleteConfirmId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -159,7 +160,7 @@ const MentorDashboard = ({ user, onLogout }) => {
   const handleGenerateReport = async (reportType, fileType) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/mentor/reports/generate', {
+      const res = await fetch(`${API_URL}/mentor/reports/generate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

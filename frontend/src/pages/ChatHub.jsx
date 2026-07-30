@@ -9,8 +9,9 @@ import {
 } from 'lucide-react';
 import PresenceStatusBadge from '../components/PresenceStatusBadge';
 import { useCall } from '../context/CallContext';
+import { SOCKET_URL, API_URL } from '../config/api';
 
-const BACKEND      = 'http://localhost:5000';
+const BACKEND      = SOCKET_URL;
 const EMOJI_LIST   = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 const CODE_LANGS   = ['javascript','java','python','cpp','sql','html','css','json','typescript','csharp'];
 const CAN_EDIT_MS  = 15 * 60 * 1000;   // 15 min
