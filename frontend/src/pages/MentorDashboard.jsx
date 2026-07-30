@@ -221,7 +221,12 @@ const MentorDashboard = ({ user, onLogout }) => {
       {/* Main Container */}
       <div style={{ 
         flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0,
-        marginLeft: isSidebarCollapsed ? '80px' : '260px', transition: 'all 300ms ease'
+        marginLeft: isSidebarCollapsed ? '80px' : '260px',
+        width: isSidebarCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 260px)',
+        maxWidth: isSidebarCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 260px)',
+        boxSizing: 'border-box',
+        transition: 'all 300ms ease',
+        overflowX: 'hidden'
       }}>
         {/* Top Navigation */}
         <TopNavigation 

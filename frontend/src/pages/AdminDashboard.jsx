@@ -238,8 +238,12 @@ const AdminDashboard = ({ user, onLogout }) => {
       <div style={{ 
         flexGrow: 1, 
         marginLeft: isSidebarCollapsed ? '80px' : '260px',
+        width: isSidebarCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 260px)',
+        maxWidth: isSidebarCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 260px)',
+        boxSizing: 'border-box',
         transition: 'all 300ms ease',
-        display: 'flex', flexDirection: 'column', minHeight: '100vh'
+        display: 'flex', flexDirection: 'column', minHeight: '100vh',
+        overflowX: 'hidden'
       }}>
         {/* Top Navbar */}
         <TopNavigation 
