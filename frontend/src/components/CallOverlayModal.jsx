@@ -221,7 +221,7 @@ const CallOverlayModal = () => {
 
       {/* Main Stream Area */}
       <div style={{ flex: 1, position: 'relative', background: '#02030a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {callType === 'video' ? (
+        {callType === 'video' && !isVideoOff && remoteMediaStatus.video ? (
           <>
             {/* Remote Video Stream */}
             <video
@@ -229,19 +229,9 @@ const CallOverlayModal = () => {
               autoPlay
               playsInline
               style={{
-                width: '100%', height: '100%', objectFit: isScreenSharing ? 'contain' : 'cover',
-                display: remoteMediaStatus.video ? 'block' : 'none'
+                width: '100%', height: '100%', objectFit: isScreenSharing ? 'contain' : 'cover'
               }}
             />
-
-            {!remoteMediaStatus.video && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#a78bfa)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800', color: '#fff' }}>
-                  {peerInfo?.name?.[0]}
-                </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600' }}>Camera is turned off</div>
-              </div>
-            )}
 
             {/* Local Video Stream Inset (PIP) */}
             {!isMinimized && (
@@ -249,46 +239,53 @@ const CallOverlayModal = () => {
                 position: 'absolute', bottom: '24px', right: '24px',
                 width: '200px', height: '130px', borderRadius: '16px',
                 overflow: 'hidden', border: '2px solid rgba(255,255,255,0.2)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.8)', background: '#0f142a'
+                boxShadow: '0 10px 30px rgba(0,0,0,0.8)', background: '#0f142a',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
                 <video
                   ref={localVideoRef}
                   autoPlay
                   muted
                   playsInline
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)', display: isVideoOff ? 'none' : 'block' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
                 />
-                {isVideoOff && (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0c1a', color: '#64748b' }}>
-                    <VideoOff size={24} />
-                  </div>
-                )}
               </div>
             )}
           </>
         ) : (
-          /* Audio Call Presentation */
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+          /* Participant Avatar Presentation (Teams / Google Meet Style) */
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', textAlign: 'center', padding: '20px' }}>
             <div style={{ position: 'relative' }}>
               <div style={{
-                width: '120px', height: '120px', borderRadius: '50%',
-                background: 'linear-gradient(135deg, #10b981, #059669)',
+                width: '124px', height: '124px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, #6366f1 0%, #a78bfa 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '3.5rem', fontWeight: '800', color: '#fff',
-                boxShadow: '0 12px 35px rgba(16, 185, 129, 0.4)'
+                fontSize: '3.6rem', fontWeight: '800', color: '#fff',
+                boxShadow: '0 15px 40px rgba(99, 102, 241, 0.4)'
               }}>
-                {peerInfo?.name?.[0]}
+                {peerInfo?.name?.[0] || '?'}
               </div>
               <div style={{
-                position: 'absolute', inset: '-10px', borderRadius: '50%',
-                border: '2px solid #34d399', animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite'
+                position: 'absolute', inset: '-12px', borderRadius: '50%',
+                border: '2px solid #818cf8', animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite'
               }} />
             </div>
-            <h3 style={{ margin: 0, color: '#fff', fontSize: '1.3rem', fontWeight: '800' }}>{peerInfo?.name}</h3>
-            <p style={{ margin: 0, color: '#34d399', fontWeight: '700', fontSize: '0.9rem' }}>
-              ● Audio Call Connected ({formatSecs(callDuration)})
-            </p>
-            {/* Hidden audio element for WebRTC audio playback */}
+
+            <div>
+              <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: '1.4rem', fontWeight: '800' }}>
+                {peerInfo?.name || 'Call Participant'}
+              </h3>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: '#34d399', padding: '6px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700'
+              }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                <span>Call Active • {formatSecs(callDuration)}</span>
+              </div>
+            </div>
+
+            {/* Hidden audio/video elements for WebRTC audio playback */}
             <video ref={remoteVideoRef} autoPlay playsInline style={{ display: 'none' }} />
             <video ref={localVideoRef} autoPlay muted playsInline style={{ display: 'none' }} />
           </div>
